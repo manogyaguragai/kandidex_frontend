@@ -35,4 +35,21 @@ export const dashboardApi = {
     });
     return response.data;
   },
+
+  updateJob: async (userId: string, jobId: string, jobRole: string, jobDescription: string, status: string) => {
+    const response = await apiClient.put(`/dashboard/update_job/${jobId}`, {
+      user_id: userId,
+      job_role: jobRole,
+      job_description: jobDescription,
+      status,
+    });
+    return response.data;
+  },
+
+  deleteJob: async (userId: string, jobId: string) => {
+    const response = await apiClient.delete(`/dashboard/delete_job/${jobId}`, {
+      params: { user_id: userId }
+    });
+    return response.data;
+  },
 };

@@ -35,7 +35,7 @@ export const screeningApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 120000, // 2 minutes timeout for large uploads/analysis
+      timeout: 300000, // 5 minutes timeout for Deep Analysis
     });
     return response.data;
   },

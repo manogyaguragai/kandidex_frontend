@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { MarketingLayout } from "@/components/MarketingLayout";
+
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
@@ -16,6 +16,8 @@ import FeaturesPage from "@/pages/FeaturesPage";
 import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import DemoPage from "@/pages/DemoPage";
+import JobsPage from "@/pages/JobsPage";
+import { AuthProvider } from "@/components/auth/AuthContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,30 +32,34 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col bg-background">
-            <Navbar />
-            <main className="flex-1">
+        <AuthProvider>
+          <BrowserRouter>
+            <div className="min-h-screen flex flex-col bg-background">
+              {/* Navbar is handled inside Layout for protected pages or globally if appropriately conditionally rendered */}
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
+                {/* Public Routes */}
+                <Route path="/" element={<MarketingLayout><HomePage /></MarketingLayout>} />
+                <Route path="/features" element={<MarketingLayout><FeaturesPage /></MarketingLayout>} />
+                <Route path="/pricing" element={<MarketingLayout><PricingPage /></MarketingLayout>} />
+                <Route path="/about" element={<MarketingLayout><AboutPage /></MarketingLayout>} />
+                <Route path="/contact" element={<MarketingLayout><ContactPage /></MarketingLayout>} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/demo" element={<MarketingLayout><DemoPage /></MarketingLayout>} />
+
+                {/* Protected Routes (Layout is applied inside these pages components or should be wrapped here) */}
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
                 <Route path="/screen-candidates" element={<ScreenCandidatesPage />} />
-                <Route path="/demo" element={<DemoPage />} />
+
                 {/* 404 Route */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
-            </main>
-            <Footer />
-          </div>
-          <Toaster position="bottom-right" richColors />
-        </BrowserRouter>
+            </div>
+            <Toaster position="bottom-right" richColors />
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

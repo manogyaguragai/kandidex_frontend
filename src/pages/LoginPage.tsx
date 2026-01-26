@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { GlowingOrb } from "@/components/ui/glowing-orb";
+import { authApi } from "@/api/auth";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -32,22 +33,25 @@ export const LoginPage = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      // In real app: await api.login(data.email, data.password)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Real API call
+      const response = await authApi.login(data.email, data.password);
       
-      const mockUser = {
-        email: data.email,
-        initials: data.email.substring(0, 2).toUpperCase(),
-        userId: "123456",
-        tier: "free"
+      const user = {
+        email: response.email || data.email,
+        // If backend sends name, use it for initials, else fallback to email
+        initials: (response.first_name && response.last_name)
+          ? `${response.first_name[0]}${response.last_name[0]}`.toUpperCase()
+          : (response.email || data.email).substring(0, 2).toUpperCase(),
+        userId: response.user_id, // Critical fix: Use ID from backend
+        tier: response.tier || response.role || "free"
       };
       
-      login(mockUser, "mock-jwt-token");
+      login(user, response.access_token);
       toast.success("Welcome back!");
       navigate("/dashboard");
-    } catch (error) {
-      toast.error("Invalid credentials. Please try again.");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.detail || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }
