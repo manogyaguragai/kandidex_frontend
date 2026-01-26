@@ -21,23 +21,23 @@ export const DashboardPage = () => {
 
   // Fetch Usage/Billing Info
   const { data: usageData, isLoading: isUsageLoading } = useQuery({
-    queryKey: ["currentUsage", user?.userId],
-    queryFn: () => billingApi.getCurrentUsage(user!.userId),
-    enabled: !!user?.userId,
+    queryKey: ["currentUsage", user?.user_id],
+    queryFn: () => billingApi.getCurrentUsage(user!.user_id),
+    enabled: !!user?.user_id,
   });
 
   // Fetch Screening Runs (Recent Activity)
   const { data: activityData, isLoading: isActivityLoading } = useQuery({
-    queryKey: ["recentActivity", user?.userId],
-    queryFn: () => screeningApi.getScreeningRuns(user!.userId, 1, 5),
-    enabled: !!user?.userId,
+    queryKey: ["recentActivity", user?.user_id],
+    queryFn: () => screeningApi.getScreeningRuns(user!.user_id, 1, 5),
+    enabled: !!user?.user_id,
   });
 
   // Fetch Active Jobs Count
   const { data: jobsData, isLoading: isJobsLoading } = useQuery({
-    queryKey: ["activeJobs", user?.userId],
-    queryFn: () => dashboardApi.getAllJobs(user!.userId, 1, 1, "active"),
-    enabled: !!user?.userId,
+    queryKey: ["activeJobs", user?.user_id],
+    queryFn: () => dashboardApi.getAllJobs(user!.user_id, 1, 1, "active"),
+    enabled: !!user?.user_id,
   });
 
   const container = {

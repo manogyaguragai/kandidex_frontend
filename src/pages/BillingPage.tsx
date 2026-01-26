@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { billingApi } from "@/api/billing";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, X, CreditCard, Zap, Shield, Sparkles } from "lucide-react";
+import { Check, CreditCard, Shield, Sparkles, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -14,9 +13,9 @@ const BillingPage = () => {
   const { user } = useAuthStore();
 
   const { data: usageData, isLoading: usageLoading } = useQuery({
-    queryKey: ["currentUsage", user?.userId],
-    queryFn: () => billingApi.getCurrentUsage(user!.userId),
-    enabled: !!user?.userId,
+    queryKey: ["currentUsage", user?.user_id],
+    queryFn: () => billingApi.getCurrentUsage(user!.user_id),
+    enabled: !!user?.user_id,
   });
 
   const { data: tiersData, isLoading: tiersLoading } = useQuery({
@@ -24,7 +23,9 @@ const BillingPage = () => {
     queryFn: billingApi.getAllTiers,
   });
 
-  const tiers = tiersData?.tiers || [];
+  const tiers = tiersData?.tiers?.filter(
+    (t: any) => t.tier !== 'sudo' || user?.tier === 'sudo'
+  ) || [];
 
   const getUsagePercentage = (used: number, limit: number) => {
     if (limit === -1) return 0;

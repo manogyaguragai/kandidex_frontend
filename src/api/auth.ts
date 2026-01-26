@@ -9,6 +9,15 @@ export interface LoginResponse {
   last_name?: string;
   role?: string;
   tier?: string;
+  tier_display_name?: string;
+  price_display?: string;
+  resumes_screened?: number;
+  deep_analysis_calls?: number;
+  questions_generated?: number;
+  emails_sent?: number;
+  external_validations?: number;
+  limits?: any;
+  cycle?: any;
 }
 
 export const authApi = {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navbar } from './layout/Navbar';
 import { Footer } from './layout/Footer';
+import { LimitReachedModal } from '@/components/ui/LimitReachedModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
       <Footer />
+      <LimitReachedModal />
     </div>
   );
 };

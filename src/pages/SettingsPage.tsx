@@ -22,7 +22,7 @@ const SettingsPage = () => {
   const [questionsCount, setQuestionsCount] = useState(3);
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: any) => settingsApi.updateRankingSettings(user!.userId, data),
+    mutationFn: (data: any) => settingsApi.updateRankingSettings(user!.user_id, data),
     onSuccess: () => {
       toast.success("Settings updated successfully");
     },
@@ -83,7 +83,7 @@ const SettingsPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>User ID</Label>
-                  <Input value={user?.userId || ''} disabled className="bg-muted font-mono text-xs" />
+                  <Input value={user?.user_id || ''} disabled className="bg-muted font-mono text-xs" />
                 </div>
                  <div className="space-y-2">
                   <Label>Role</Label>
