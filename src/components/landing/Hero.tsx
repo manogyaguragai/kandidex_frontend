@@ -47,8 +47,8 @@ export const Hero = () => {
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
               <Button size="xl" className="shadow-glow-blue hover:scale-105 transition-transform" asChild>
-                <Link to="/register">
-                  Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+                <Link to="/login">
+                  Start Using Kandidex <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
               <Button size="xl" variant="outline" className="hover:bg-accent/5" asChild>

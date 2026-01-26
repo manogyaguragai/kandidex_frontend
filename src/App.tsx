@@ -15,6 +15,7 @@ import ScreenCandidatesPage from "@/pages/ScreenCandidatesPage";
 import FeaturesPage from "@/pages/FeaturesPage";
 import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import DemoPage from "@/pages/DemoPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
                 <Route path="/screen-candidates" element={<ScreenCandidatesPage />} />
+                <Route path="/demo" element={<DemoPage />} />
                 {/* 404 Route */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
