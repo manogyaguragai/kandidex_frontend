@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -60,11 +61,15 @@ export const UserHub = () => {
         <Separator className="bg-border/50" />
 
         {/* Navigation Grid */}
-        <div className="p-2 grid grid-cols-3 gap-1">
+        <div className="p-2 grid grid-cols-4 gap-1">
             <Link to="/dashboard" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <LayoutDashboard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Dashboard</span>
             </Link>
+          <Link to="/questions" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
+            <MessageSquare className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Questions</span>
+          </Link>
             <Link to="/billing" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <CreditCard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Billing</span>

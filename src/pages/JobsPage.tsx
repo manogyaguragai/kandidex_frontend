@@ -1,18 +1,89 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Trash2, Edit, Briefcase, Calendar, ChevronRight } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Briefcase, Calendar, ChevronRight, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { dashboardApi, Job } from '@/api/dashboard';
+import { CandidateStatus, CANDIDATE_STATUS_OPTIONS } from '@/api/screening';
 import AppLayout from '@/components/AppLayout';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+
+// Phase colors for the pipeline visualization
+const PHASE_COLORS: Record<CandidateStatus, { bg: string; text: string; bar: string; glow: string }> = {
+  new: {
+    bg: 'bg-blue-500/10 dark:bg-blue-500/20',
+    text: 'text-blue-600 dark:text-blue-400',
+    bar: 'bg-gradient-to-r from-blue-500 to-blue-400',
+    glow: 'shadow-blue-500/30'
+  },
+  screening: {
+    bg: 'bg-cyan-500/10 dark:bg-cyan-500/20',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    bar: 'bg-gradient-to-r from-cyan-500 to-cyan-400',
+    glow: 'shadow-cyan-500/30'
+  },
+  interview: {
+    bg: 'bg-purple-500/10 dark:bg-purple-500/20',
+    text: 'text-purple-600 dark:text-purple-400',
+    bar: 'bg-gradient-to-r from-purple-500 to-purple-400',
+    glow: 'shadow-purple-500/30'
+  },
+  offer: {
+    bg: 'bg-amber-500/10 dark:bg-amber-500/20',
+    text: 'text-amber-600 dark:text-amber-400',
+    bar: 'bg-gradient-to-r from-amber-500 to-amber-400',
+    glow: 'shadow-amber-500/30'
+  },
+  hired: {
+    bg: 'bg-green-500/10 dark:bg-green-500/20',
+    text: 'text-green-600 dark:text-green-400',
+    bar: 'bg-gradient-to-r from-green-500 to-emerald-400',
+    glow: 'shadow-green-500/30'
+  },
+  rejected: {
+    bg: 'bg-red-500/10 dark:bg-red-500/20',
+    text: 'text-red-600 dark:text-red-400',
+    bar: 'bg-gradient-to-r from-red-500 to-rose-400',
+    glow: 'shadow-red-500/30'
+  },
+};
+
+// Type for candidate counts per phase
+interface PhaseCounts {
+  new: number;
+  screening: number;
+  interview: number;
+  offer: number;
+  hired: number;
+  rejected: number;
+  total: number;
+}
+
+// Mock function to get candidate counts - replace with real API when available
+const getMockPhaseCounts = (jobId: string): PhaseCounts => {
+  // Generate consistent mock data based on job ID hash
+  const hash = jobId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return {
+    new: (hash % 12) + 3,
+    screening: (hash % 8) + 2,
+    interview: (hash % 6) + 1,
+    offer: (hash % 4),
+    hired: (hash % 3),
+    rejected: (hash % 5) + 1,
+    total: 0, // Will be calculated
+  };
+};
 
 const JobsPage: React.FC = () => {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CandidateStatus | 'all'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [jobPhaseCounts, setJobPhaseCounts] = useState<Record<string, PhaseCounts>>({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -27,6 +98,16 @@ const JobsPage: React.FC = () => {
       setLoading(true);
       const data = await dashboardApi.getAllJobs(userId, 1, 100);
       setJobs(data.results);
+
+      // Generate phase counts for each job
+      const counts: Record<string, PhaseCounts> = {};
+      data.results.forEach((job: Job) => {
+        const phaseCounts = getMockPhaseCounts(job.id);
+        phaseCounts.total = phaseCounts.new + phaseCounts.screening + phaseCounts.interview +
+          phaseCounts.offer + phaseCounts.hired + phaseCounts.rejected;
+        counts[job.id] = phaseCounts;
+      });
+      setJobPhaseCounts(counts);
     } catch (error) {
       toast.error('Failed to fetch jobs');
       console.error(error);
@@ -103,9 +184,15 @@ const JobsPage: React.FC = () => {
     job.job_role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleViewCandidates = (jobId: string, phase?: CandidateStatus) => {
+    // Navigate to screening history filtered by job
+    navigate(`/screening-history?job=${jobId}${phase ? `&phase=${phase}` : ''}`);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-8">
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold gradient-text">Job Openings</h1>
@@ -120,16 +207,44 @@ const JobsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Search */}
-        <div className="glass-card p-2 rounded-xl flex items-center gap-3">
-          <Search className="w-5 h-5 text-muted-foreground ml-2" />
-          <input
-            type="text"
-            placeholder="Search jobs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
-          />
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="glass-card p-2 rounded-xl flex items-center gap-3 flex-1">
+            <Search className="w-5 h-5 text-muted-foreground ml-2" />
+            <input
+              type="text"
+              placeholder="Search jobs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
+            />
+          </div>
+
+          {/* Phase Filter Chips */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${statusFilter === 'all'
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                }`}
+            >
+              All Phases
+            </button>
+            {CANDIDATE_STATUS_OPTIONS.slice(0, 4).map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setStatusFilter(option.value)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${statusFilter === option.value
+                  ? `${PHASE_COLORS[option.value].bg} ${PHASE_COLORS[option.value].text} ring-2 ring-current/20`
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                  }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${PHASE_COLORS[option.value].bar}`} />
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Jobs List */}
@@ -141,67 +256,152 @@ const JobsPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             <AnimatePresence>
               {filteredJobs.length > 0 ? (
-                filteredJobs.map((job, index) => (
-                  <motion.div
-                    key={job.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="glass-card p-6 rounded-2xl group relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    
-                    <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-bold text-foreground">{job.job_role}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                            job.status === 'active' 
-                              ? 'bg-green-500/10 text-green-600 border-green-500/20' 
-                              : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
-                          }`}>
-                            {job.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground mt-2 line-clamp-2 max-w-3xl">
-                          {job.job_description}
-                        </p>
-                        <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Created: {new Date(job.created_at).toLocaleDateString()}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
-                            ID: {job.id.slice(-6)}
-                          </div>
-                        </div>
-                      </div>
+                  filteredJobs.map((job, index) => {
+                    const counts = jobPhaseCounts[job.id] || { new: 0, screening: 0, interview: 0, offer: 0, hired: 0, rejected: 0, total: 0 };
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openEditModal(job)}
-                          className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                          title="Edit Job"
-                        >
-                          <Edit className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(job.id)}
-                          className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete Job"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                        <button className="flex items-center gap-1 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors text-sm font-medium">
-                          View Candidates
+                    return (
+                      <motion.div
+                        key={job.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="glass-card p-6 rounded-2xl group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                        {/* Job Header */}
+                        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 mb-6">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-bold text-foreground">{job.job_role}</h3>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${job.status === 'active'
+                                ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20'
+                                : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                                }`}>
+                                {job.status.toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground line-clamp-2 max-w-3xl text-sm">
+                              {job.job_description}
+                            </p>
+                            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                Created: {new Date(job.created_at).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="w-4 h-4" />
+                                {counts.total} candidates
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => openEditModal(job)}
+                              className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Edit Job"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(job.id)}
+                              className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete Job"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Candidate Pipeline Visualization */}
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Users className="w-4 h-4 text-primary" />
+                            Hiring Pipeline
+                          </h4>
+
+                          {/* Phase Bar Visualization */}
+                          <div className="relative h-8 rounded-xl bg-muted/30 overflow-hidden flex">
+                            {counts.total > 0 ? (
+                              <>
+                                {(['new', 'screening', 'interview', 'offer', 'hired', 'rejected'] as CandidateStatus[]).map((phase, idx) => {
+                                  const count = counts[phase];
+                                  const percentage = (count / counts.total) * 100;
+                                  if (percentage === 0) return null;
+
+                                  return (
+                                    <motion.div
+                                      key={phase}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${percentage}%` }}
+                                      transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
+                                      className={`${PHASE_COLORS[phase].bar} h-full relative group/phase cursor-pointer hover:brightness-110 transition-all`}
+                                      onClick={() => handleViewCandidates(job.id, phase)}
+                                    >
+                                      {percentage > 10 && (
+                                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow">
+                                          {count}
+                                        </span>
+                                      )}
+                                      {/* Tooltip */}
+                                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-foreground text-background text-xs font-medium opacity-0 group-hover/phase:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        {CANDIDATE_STATUS_OPTIONS.find(o => o.value === phase)?.label}: {count}
+                                      </div>
+                                    </motion.div>
+                                  );
+                                })}
+                              </>
+                            ) : (
+                              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
+                                No candidates yet
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Phase Chips */}
+                          <div className="flex flex-wrap gap-2">
+                            {(['new', 'screening', 'interview', 'offer', 'hired', 'rejected'] as CandidateStatus[]).map((phase) => {
+                              const count = counts[phase];
+                              const colors = PHASE_COLORS[phase];
+
+                              return (
+                                <motion.button
+                                  key={phase}
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleViewCandidates(job.id, phase)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${colors.bg} ${colors.text} border-current/20 hover:shadow-lg ${colors.glow}`}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <span className={`w-2 h-2 rounded-full ${colors.bar}`} />
+                                    {CANDIDATE_STATUS_OPTIONS.find(o => o.value === phase)?.label}
+                                    <span className="ml-1 px-1.5 py-0.5 rounded bg-background/50 text-foreground/70 font-bold">
+                                      {count}
+                                    </span>
+                                  </span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* View All Button */}
+                        <div className="mt-4 pt-4 border-t border-border/50 flex justify-end">
+                          <button
+                            onClick={() => handleViewCandidates(job.id)}
+                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 text-primary rounded-lg transition-all text-sm font-medium border border-primary/10"
+                          >
+                            View All Candidates
                           <ChevronRight className="w-4 h-4" />
                         </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
+                        </div>
+                      </motion.div>
+                    );
+                  })
               ) : (
                 <div className="text-center py-20 glass-card rounded-2xl">
                   <Briefcase className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />

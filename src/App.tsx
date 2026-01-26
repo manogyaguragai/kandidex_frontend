@@ -17,6 +17,9 @@ import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import DemoPage from "@/pages/DemoPage";
 import JobsPage from "@/pages/JobsPage";
+import ScreeningHistoryPage from "@/pages/ScreeningHistoryPage";
+import ScreeningHistoryListPage from "@/pages/ScreeningHistoryListPage";
+import QuestionsPage from "@/pages/QuestionsPage";
 import { AuthProvider } from "@/components/auth/AuthContext";
 
 const queryClient = new QueryClient({
@@ -52,6 +55,9 @@ function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
                 <Route path="/screen-candidates" element={<ScreenCandidatesPage />} />
+                <Route path="/screening-history/:runId" element={<ScreeningHistoryPage />} />
+                <Route path="/screening-history" element={<ScreeningHistoryListPage />} />
+                <Route path="/questions" element={<QuestionsPage />} />
 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFoundPage />} />

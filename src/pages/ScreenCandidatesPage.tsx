@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { 
@@ -16,7 +15,12 @@ import {
   AlertCircle, 
   Loader2, 
   ChevronRight, 
-  Briefcase
+  Briefcase,
+  Brain,
+  Sparkles,
+  FileSearch,
+  Zap,
+  Target
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -37,9 +41,9 @@ const ScreenCandidatesPage = () => {
 
   // Fetch user's jobs for selection
   const { data: jobsData } = useQuery({
-    queryKey: ["userJobs", user?.userId],
-    queryFn: () => dashboardApi.getAllJobs(user!.userId, 1, 100),
-    enabled: !!user?.userId
+    queryKey: ["userJobs", user?.user_id],
+    queryFn: () => dashboardApi.getAllJobs(user!.user_id, 1, 100),
+    enabled: !!user?.user_id
   });
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -51,7 +55,9 @@ const ScreenCandidatesPage = () => {
     accept: {
       'application/pdf': ['.pdf'],
       'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/zip': ['.zip'],
+      'application/x-zip-compressed': ['.zip']
     }
   });
 
@@ -62,7 +68,7 @@ const ScreenCandidatesPage = () => {
   const screeningMutation = useMutation({
     mutationFn: async () => {
       const formData = new FormData();
-      formData.append("user_id", user!.userId);
+      formData.append("user_id", user!.user_id);
       formData.append("job_role", jobRole);
       formData.append("job_desc", jobDescription);
       formData.append("deep_analysis", useDeepAnalysis.toString());
@@ -184,7 +190,7 @@ const ScreenCandidatesPage = () => {
                 <div>
                   <h3 className="text-xl font-semibold">Drop resumes here</h3>
                   <p className="text-muted-foreground mt-2">
-                    Support PDF, DOC, DOCX. Drag & drop or click to browse.
+                    Support PDF, DOC, DOCX, and ZIP files. Drag & drop or click to browse.
                   </p>
                 </div>
               </div>
@@ -317,29 +323,311 @@ const ScreenCandidatesPage = () => {
         {step === 3 && (
           <motion.div
             key="step3"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-20 text-center space-y-8 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="relative min-h-[600px] flex flex-col items-center justify-center py-12"
           >
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full border-4 border-muted flex items-center justify-center">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            {/* Animated Background */}
+            <div className="absolute inset-0 overflow-hidden rounded-3xl">
+              {/* Gradient Mesh Background - Light/Dark mode aware */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 dark:from-blue-950/50 dark:via-purple-950/50 dark:to-indigo-950/50" />
+
+              {/* Animated Grid */}
+              <div className="absolute inset-0 opacity-30 dark:opacity-20">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `linear-gradient(rgba(99, 102, 241, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.15) 1px, transparent 1px)`,
+                  backgroundSize: '40px 40px',
+                  animation: 'grid-pulse 4s ease-in-out infinite'
+                }} />
               </div>
-              <div className="absolute top-0 left-0 w-32 h-32 rounded-full border-4 border-primary border-t-transparent animate-spin" style={{ animationDuration: '1.5s' }} />
-              <div className="absolute top-2 left-2 w-28 h-28 rounded-full border-4 border-purple-500 border-t-transparent animate-spin ml-auto" style={{ animationDirection: 'reverse', animationDuration: '2s' }} />
+
+              {/* Floating Orbs */}
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full blur-3xl"
+                  style={{
+                    width: `${150 + i * 50}px`,
+                    height: `${150 + i * 50}px`,
+                    background: i % 2 === 0
+                      ? 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)'
+                      : 'radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)',
+                    left: `${10 + i * 15}%`,
+                    top: `${20 + (i % 3) * 25}%`,
+                  }}
+                  animate={{
+                    x: [0, 30, -20, 0],
+                    y: [0, -40, 20, 0],
+                    scale: [1, 1.1, 0.95, 1],
+                  }}
+                  transition={{
+                    duration: 8 + i * 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+
+              {/* Particle Field */}
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={`particle-${i}`}
+                  className="absolute w-1 h-1 rounded-full bg-blue-400/60"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    y: [-20, 20],
+                    x: [-10, 10],
+                    opacity: [0.2, 0.8, 0.2],
+                    scale: [1, 1.5, 1],
+                  }}
+                  transition={{
+                    duration: 3 + Math.random() * 4,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-3xl font-bold gradient-text">Analyzing Candidates...</h3>
-              <p className="text-muted-foreground text-lg">
-                 Our AI is reading resumes, extracting skills, and matching them against your job description. This may take a moment.
-               </p>
+            {/* Main Content */}
+            <div className="relative z-10 flex flex-col items-center space-y-10 max-w-3xl mx-auto px-6">
+
+              {/* Neural Network Brain Animation */}
+              <div className="relative">
+                {/* Outer Glow Ring */}
+                <motion.div
+                  className="absolute -inset-8 rounded-full"
+                  style={{
+                    background: 'conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.5), rgba(147, 51, 234, 0.5), transparent)',
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+
+                {/* Secondary Ring */}
+                <motion.div
+                  className="absolute -inset-6 rounded-full border-2 border-dashed border-blue-500/30"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                />
+
+                {/* Main Brain Container */}
+                <motion.div
+                  className="relative w-40 h-40 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl"
+                  animate={{
+                    boxShadow: [
+                      '0 0 60px rgba(59, 130, 246, 0.3), 0 0 120px rgba(147, 51, 234, 0.2)',
+                      '0 0 80px rgba(59, 130, 246, 0.5), 0 0 160px rgba(147, 51, 234, 0.3)',
+                      '0 0 60px rgba(59, 130, 246, 0.3), 0 0 120px rgba(147, 51, 234, 0.2)',
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  {/* Pulsing Core */}
+                  <motion.div
+                    className="absolute inset-4 rounded-full bg-gradient-to-br from-blue-500/40 to-purple-500/40"
+                    animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+
+                  {/* Brain Icon */}
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Brain className="w-16 h-16 text-white drop-shadow-lg" />
+                  </motion.div>
+
+                  {/* Orbiting Sparkles */}
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-3 h-3"
+                      style={{ originX: '50%', originY: '50%' }}
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 4 + i,
+                        repeat: Infinity,
+                        ease: "linear",
+                        delay: i * 0.5,
+                      }}
+                    >
+                      <motion.div
+                        className="absolute"
+                        style={{
+                          left: `${60 + i * 15}px`,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                        }}
+                      >
+                        <Sparkles className={`w-4 h-4 ${i === 0 ? 'text-blue-400' : i === 1 ? 'text-purple-400' : 'text-cyan-400'}`} />
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Neural Connection Lines */}
+                <svg className="absolute -inset-12 w-[calc(100%+96px)] h-[calc(100%+96px)]" style={{ transform: 'translate(-24px, -24px)' }}>
+                  {[...Array(8)].map((_, i) => {
+                    const angle = (i * 45) * (Math.PI / 180);
+                    const x1 = 120 + Math.cos(angle) * 50;
+                    const y1 = 120 + Math.sin(angle) * 50;
+                    const x2 = 120 + Math.cos(angle) * 100;
+                    const y2 = 120 + Math.sin(angle) * 100;
+                    return (
+                      <motion.line
+                        key={i}
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="url(#neural-gradient)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: [0.3, 0.8, 0.3] }}
+                        transition={{
+                          pathLength: { duration: 1.5, delay: i * 0.1 },
+                          opacity: { duration: 2, repeat: Infinity, delay: i * 0.2 }
+                        }}
+                      />
+                    );
+                  })}
+                  <defs>
+                    <linearGradient id="neural-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3B82F6" />
+                      <stop offset="100%" stopColor="#9333EA" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              {/* Title with Typing Effect */}
+              <div className="text-center space-y-4">
+                <motion.h2
+                  className="text-4xl md:text-5xl font-bold"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                    AI Analysis in Progress
+                  </span>
+                </motion.h2>
+                <motion.p
+                  className="text-lg text-muted-foreground max-w-lg mx-auto"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  Our neural network is parsing resumes, extracting skills, and ranking candidates in real-time.
+                </motion.p>
+              </div>
+
+              {/* AI Waveform Visualization */}
+              <motion.div
+                className="w-full max-w-md h-16 flex items-center justify-center gap-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                {[...Array(24)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 rounded-full bg-gradient-to-t from-blue-500 to-purple-500"
+                    animate={{
+                      height: [12, 20 + Math.random() * 40, 12],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 0.8 + Math.random() * 0.6,
+                      repeat: Infinity,
+                      delay: i * 0.05,
+                      ease: "easeInOut",
+                    }}
+                  />
+                ))}
+              </motion.div>
+
+              {/* Progress Steps */}
+              <div className="w-full max-w-lg space-y-4">
+                {[
+                  { icon: FileSearch, label: 'Extracting resume data', delay: 0 },
+                  { icon: Brain, label: 'Analyzing skills & experience', delay: 1 },
+                  { icon: Target, label: 'Matching against job requirements', delay: 2 },
+                  { icon: Zap, label: 'Ranking candidates by fit score', delay: 3 },
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-sm shadow-sm"
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 + index * 0.2 }}
+                  >
+                    <motion.div
+                      className="p-2 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20"
+                      animate={{
+                        boxShadow: [
+                          '0 0 0 rgba(59, 130, 246, 0)',
+                          '0 0 20px rgba(59, 130, 246, 0.3)',
+                          '0 0 0 rgba(59, 130, 246, 0)',
+                        ],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                    >
+                      <item.icon className="w-5 h-5 text-blue-400" />
+                    </motion.div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-foreground/80">{item.label}</span>
+                    <motion.div
+                      className="ml-auto"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 className="w-4 h-4 text-purple-400" />
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Glowing Progress Bar */}
+              <motion.div
+                className="w-full max-w-lg"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+              >
+                <div className="relative h-3 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500"
+                    animate={{ width: ['0%', '100%'] }}
+                    transition={{ duration: 15, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                    }}
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+                <p className="text-center text-sm text-muted-foreground mt-3">
+                  Processing {files.length} resume{files.length > 1 ? 's' : ''}...
+                </p>
+              </motion.div>
             </div>
 
-            <div className="w-full space-y-2">
-              <Progress value={66} className="h-2 bg-muted" />
-               <p className="text-xs text-muted-foreground text-right w-full">Processing...</p>
-            </div>
+            {/* CSS Keyframes inline style */}
+            <style>{`
+              @keyframes grid-pulse {
+                0%, 100% { opacity: 0.1; }
+                50% { opacity: 0.25; }
+              }
+            `}</style>
           </motion.div>
         )}
 

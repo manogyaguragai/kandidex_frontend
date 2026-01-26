@@ -171,7 +171,7 @@ export const DashboardPage = () => {
         <div className="col-span-full md:col-span-4 glass-card rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold text-foreground">Recent Screening Activity</h3>
-            <Link to="/screen-candidates" className="text-sm text-primary hover:underline">View all</Link>
+            <Link to="/screening-history" className="text-sm text-primary hover:underline">View all</Link>
           </div>
 
           <div className="space-y-4">
@@ -201,7 +201,7 @@ export const DashboardPage = () => {
                       </p>
                     </div>
                     <Link
-                      to={`/screen-candidates?run=${run.id}`}
+                      to={`/screening-history/${run.id}`}
                       className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                     >
                       <ArrowRight className="w-4 h-4" />
