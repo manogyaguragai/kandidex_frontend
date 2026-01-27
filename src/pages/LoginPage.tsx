@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { GlowingOrb } from "@/components/ui/glowing-orb";
+import { authApi } from "@/api/auth";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -23,7 +24,13 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -32,22 +39,46 @@ export const LoginPage = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      // In real app: await api.login(data.email, data.password)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Real API call
+      const response = await authApi.login(data.email, data.password);
       
-      const mockUser = {
-        email: data.email,
-        initials: data.email.substring(0, 2).toUpperCase(),
-        userId: "123456",
-        tier: "free"
+      const user = {
+        email: response.email || data.email,
+        // If backend sends name, use it for initials, else fallback to email
+        initials: (response.first_name && response.last_name)
+          ? `${response.first_name[0]}${response.last_name[0]}`.toUpperCase()
+          : (response.email || data.email).substring(0, 2).toUpperCase(),
+        user_id: response.user_id,
+        tier: response.tier || response.role || "free",
+        tier_display_name: response.tier_display_name || "Free Plan",
+        price_display: response.price_display || "$0",
+        resumes_screened: response.resumes_screened || 0,
+        deep_analysis_calls: response.deep_analysis_calls || 0,
+        questions_generated: response.questions_generated || 0,
+        emails_sent: response.emails_sent || 0,
+        external_validations: response.external_validations || 0,
+        limits: response.limits || {
+          resumes_per_month: 0,
+          deep_analysis_per_month: 0,
+          questions_per_resume: 0,
+          emails_per_month: 0,
+          external_validations_per_month: 0
+        },
+        cycle: response.cycle || {
+          user_id: response.user_id,
+          start_date: new Date().toISOString(),
+          end_date: new Date().toISOString(),
+          days_remaining: 0,
+          usage_percentage: 0
+        }
       };
       
-      login(mockUser, "mock-jwt-token");
+      login(user, response.access_token);
       toast.success("Welcome back!");
       navigate("/dashboard");
-    } catch (error) {
-      toast.error("Invalid credentials. Please try again.");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.detail || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }

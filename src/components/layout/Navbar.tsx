@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, Moon, Sun, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// Dropdown imports removed as they are replaced by UserHub
 import { useAuthStore } from "@/store/authStore";
+import { UserHub } from "@/components/layout/UserHub";
 import { navbarVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +15,14 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -110,33 +110,7 @@ export const Navbar = () => {
 
             {/* Auth Buttons */}
             {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="rounded-full gap-2 pl-2 pr-3 h-10 border border-transparent hover:border-input">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-                      {user.initials}
-                    </div>
-                    <span className="text-sm font-medium">{user.email.split('@')[0]}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 mt-2">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="cursor-pointer">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="cursor-pointer">Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/billing" className="cursor-pointer">Billing</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-destructive cursor-pointer">
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserHub />
             ) : (
               <div className="flex items-center gap-3">
                 <Button variant="ghost" asChild className="hidden lg:inline-flex">
@@ -147,6 +121,7 @@ export const Navbar = () => {
                 </Button>
               </div>
             )}
+
           </div>
 
           {/* Mobile Menu */}
@@ -202,7 +177,7 @@ export const Navbar = () => {
                             <Link to="/dashboard">Go to Dashboard</Link>
                           </Button>
                         </SheetClose>
-                        <Button variant="outline" size="lg" onClick={logout} className="w-full text-destructive hover:text-destructive">
+                        <Button variant="outline" size="lg" onClick={handleLogout} className="w-full text-destructive hover:text-destructive">
                           Sign Out
                         </Button>
                       </>

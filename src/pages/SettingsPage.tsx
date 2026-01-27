@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,12 @@ import { Separator } from "@/components/ui/separator";
 
 const SettingsPage = () => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
   
   // State for Ranking Settings
   const [phase1Limit, setPhase1Limit] = useState(20);
@@ -22,7 +29,7 @@ const SettingsPage = () => {
   const [questionsCount, setQuestionsCount] = useState(3);
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: any) => settingsApi.updateRankingSettings(user!.userId, data),
+    mutationFn: (data: any) => settingsApi.updateRankingSettings(user!.user_id, data),
     onSuccess: () => {
       toast.success("Settings updated successfully");
     },
@@ -83,7 +90,7 @@ const SettingsPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>User ID</Label>
-                  <Input value={user?.userId || ''} disabled className="bg-muted font-mono text-xs" />
+                  <Input value={user?.user_id || ''} disabled className="bg-muted font-mono text-xs" />
                 </div>
                  <div className="space-y-2">
                   <Label>Role</Label>
@@ -93,7 +100,7 @@ const SettingsPage = () => {
             </CardContent>
             <CardFooter className="justify-between">
                <div className="text-sm text-muted-foreground">Profile changes are disabled for this preview.</div>
-               <Button onClick={logout} variant="destructive" size="sm">
+              <Button onClick={handleLogout} variant="destructive" size="sm">
                  <LogOut className="w-4 h-4 mr-2" />
                  Sign Out
                </Button>
