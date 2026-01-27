@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthContext";
-import AppLayout from "@/components/AppLayout";
+
 import { screeningApi, ScreeningRun } from "@/api/screening";
 import { motion } from "framer-motion";
 import {
@@ -57,7 +57,7 @@ const ScreeningHistoryListPage = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       {/* Hero Header */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -258,7 +258,7 @@ const ScreeningHistoryListPage = () => {
           )}
         </>
       )}
-    </AppLayout>
+    </>
   );
 };
 

@@ -15,7 +15,7 @@ import { billingApi } from "@/api/billing";
 import { screeningApi } from "@/api/screening";
 import { dashboardApi } from "@/api/dashboard";
 import { motion } from "framer-motion";
-import AppLayout from "@/components/AppLayout";
+
 
 export const DashboardPage = () => {
   const { user } = useAuthStore();
@@ -57,7 +57,7 @@ export const DashboardPage = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-4xl font-bold tracking-tight gradient-text mb-2">Dashboard</h1>
@@ -280,7 +280,7 @@ export const DashboardPage = () => {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 };
 

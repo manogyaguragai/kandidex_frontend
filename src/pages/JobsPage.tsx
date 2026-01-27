@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthContext';
 import { dashboardApi, Job } from '@/api/dashboard';
 import { resumeApi } from '@/api/resume';
 import { CandidateStatus, CANDIDATE_STATUS_OPTIONS } from '@/api/screening';
-import AppLayout from '@/components/AppLayout';
+
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -226,7 +226,7 @@ const JobsPage: React.FC = () => {
   };
 
   return (
-    <AppLayout>
+
       <div className="space-y-8 pb-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -524,7 +524,7 @@ const JobsPage: React.FC = () => {
           </div>
         )}
       </div>
-    </AppLayout>
+
   );
 };
 

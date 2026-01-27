@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
-import AppLayout from "@/components/AppLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,7 +53,6 @@ const ScreenCandidatesPage = () => {
 
   // New state for existing candidates mode
   const [screenMode, setScreenMode] = useState<'upload' | 'existing'>('upload');
-  const [existingResumesCount, setExistingResumesCount] = useState(0);
 
   // Fetch user's jobs for selection (keep this for the dropdown)
   const { data: jobsData } = useQuery({
@@ -89,7 +88,6 @@ const ScreenCandidatesPage = () => {
             const initialSelection = pending.length > 0 ? pending.map((r: any) => r._id) : [];
 
             setSelectedCandidateIds(initialSelection);
-            setExistingResumesCount(pending.length);
             setScreenMode('existing');
             setStep(2);
           } else {
@@ -221,7 +219,7 @@ const ScreenCandidatesPage = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight gradient-text mb-2">Screen Candidates</h1>
         <p className="text-muted-foreground text-lg">Upload resumes and let AI find your best matches.</p>
@@ -877,7 +875,7 @@ const ScreenCandidatesPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </AppLayout>
+    </>
   );
 };
 

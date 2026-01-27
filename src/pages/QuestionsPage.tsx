@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/components/auth/AuthContext";
-import AppLayout from "@/components/AppLayout";
+
 import { screeningApi, ScreeningRun, GeneratedQuestion } from "@/api/screening";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -111,7 +111,6 @@ const QuestionsPage = () => {
 
   if (isLoading) {
     return (
-      <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-4 border-muted flex items-center justify-center">
@@ -123,13 +122,12 @@ const QuestionsPage = () => {
             <h3 className="text-xl font-semibold gradient-text">Loading Questions</h3>
             <p className="text-muted-foreground">Fetching your AI-generated interview questions...</p>
           </div>
-        </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       {/* Hero Header */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -386,7 +384,7 @@ const QuestionsPage = () => {
           })}
         </div>
       )}
-    </AppLayout>
+    </>
   );
 };
 
