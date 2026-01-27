@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Linkedin, Instagram, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 export const Footer = () => {
   return (
@@ -10,7 +8,7 @@ export const Footer = () => {
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600" />
       
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
           {/* Brand Column */}
           <div className="space-y-6 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2">
@@ -66,20 +64,6 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div>
-            <h3 className="font-semibold text-lg mb-6">Stay Updated</h3>
-            <p className="text-muted-foreground mb-4">
-              Subscribe to our newsletter for the latest hiring trends and AI insights.
-            </p>
-            <div className="flex flex-col gap-3">
-              <Input placeholder="Enter your email" className="bg-background border-input" />
-              <Button className="w-full">
-                Subscribe
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">

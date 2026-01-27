@@ -8,7 +8,8 @@ import {
   Users,
   Search,
   ArrowRight,
-  Briefcase
+  Briefcase,
+  FileText
 } from "lucide-react";
 import { billingApi } from "@/api/billing";
 import { screeningApi } from "@/api/screening";
@@ -130,37 +131,41 @@ export const DashboardPage = () => {
           </div>
           <div className="flex flex-col h-full justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Plan Usage</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Current Plan</p>
               {isUsageLoading ? (
                 <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse" />
               ) : (
                   <h3 className="text-3xl font-bold text-foreground">
-                    {usageData?.limits?.resumes_per_month === -1 
-                      ? "Unlimited"
-                      : `${usageData?.cycle?.days_remaining || 0} Days`}
+                    {usageData?.tier_display_name || "Free"}
                   </h3>
               )}
             </div>
             <div className="mt-4 flex items-center text-xs text-green-500 font-medium">
               {usageData?.limits?.resumes_per_month === -1
-                ? "Enterprise Plan"
-                : `${usageData?.limits?.resumes_per_month ?? 0} resumes/mo limit`}
+                ? "Unlimited screenings"
+                : `${usageData?.resumes_screened || 0} / ${usageData?.limits?.resumes_per_month || 0} used • ${usageData?.cycle?.days_remaining || 0} days left`}
             </div>
           </div>
         </motion.div>
 
-        {/* AI Efficiency Score */}
-        <motion.div variants={item} className="p-6 rounded-2xl relative overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg group">
-          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
-            <Activity className="w-24 h-24 text-white" />
+        {/* Total Questions Generated Card */}
+        <motion.div variants={item} className="glass-card p-6 rounded-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <FileText className="w-24 h-24 text-orange-500" />
           </div>
           <div className="flex flex-col h-full justify-between relative z-10">
             <div>
-              <p className="text-sm font-medium text-blue-100 mb-1">AI Efficiency</p>
-              <h3 className="text-3xl font-bold text-white">94%</h3>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Total Questions</p>
+              {isUsageLoading ? (
+                <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700/50 rounded animate-pulse" />
+              ) : (
+                <h3 className="text-3xl font-bold text-foreground">{usageData?.questions_generated || 0}</h3>
+              )}
             </div>
-            <div className="mt-4 flex items-center text-xs text-blue-100 font-medium">
-              Time saved vs manual screening
+            <div className="mt-4 flex items-center text-xs text-orange-500 font-medium">
+              <Link to="/questions" className="hover:underline flex items-center">
+                View All Questions <ArrowRight className="w-3 h-3 ml-1" />
+              </Link>
             </div>
           </div>
         </motion.div>
