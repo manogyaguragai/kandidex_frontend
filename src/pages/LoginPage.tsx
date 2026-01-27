@@ -12,6 +12,7 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { GlowingOrb } from "@/components/ui/glowing-orb";
 import { authApi } from "@/api/auth";
+import { getMainDomainUrl } from "@/lib/subdomain";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -161,9 +162,9 @@ export const LoginPage = () => {
           
           <CardFooter className="text-center justify-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
-            <Link to="/contact" className="text-primary hover:underline ml-1 font-medium">
+            <a href={`${getMainDomainUrl()}/contact`} className="text-primary hover:underline ml-1 font-medium">
               Contact Admin
-            </Link>
+            </a>
           </CardFooter>
         </Card>
       </motion.div>
