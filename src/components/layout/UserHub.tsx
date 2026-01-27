@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Popover,
   PopoverContent,
@@ -20,6 +20,12 @@ import { Separator } from "@/components/ui/separator";
 
 export const UserHub = () => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   if (!user) return null;
 
@@ -99,7 +105,7 @@ export const UserHub = () => {
 
         {/* Footer */}
         <div className="p-2">
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9" onClick={logout}>
+          <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Log out
             </Button>

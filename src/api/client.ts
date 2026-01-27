@@ -28,6 +28,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
+      window.location.href = '/';
     }
     if (error.response?.status === 403 && error.response?.data?.detail?.includes('limit')) {
       // Dispatch a custom event that the UI can listen to

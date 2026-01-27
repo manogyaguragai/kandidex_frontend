@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,12 @@ import { Separator } from "@/components/ui/separator";
 
 const SettingsPage = () => {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
   
   // State for Ranking Settings
   const [phase1Limit, setPhase1Limit] = useState(20);
@@ -93,7 +100,7 @@ const SettingsPage = () => {
             </CardContent>
             <CardFooter className="justify-between">
                <div className="text-sm text-muted-foreground">Profile changes are disabled for this preview.</div>
-               <Button onClick={logout} variant="destructive" size="sm">
+              <Button onClick={handleLogout} variant="destructive" size="sm">
                  <LogOut className="w-4 h-4 mr-2" />
                  Sign Out
                </Button>

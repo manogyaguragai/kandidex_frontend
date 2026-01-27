@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, Moon, Sun, LogIn } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -15,8 +15,14 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -171,7 +177,7 @@ export const Navbar = () => {
                             <Link to="/dashboard">Go to Dashboard</Link>
                           </Button>
                         </SheetClose>
-                        <Button variant="outline" size="lg" onClick={logout} className="w-full text-destructive hover:text-destructive">
+                        <Button variant="outline" size="lg" onClick={handleLogout} className="w-full text-destructive hover:text-destructive">
                           Sign Out
                         </Button>
                       </>
