@@ -1,13 +1,16 @@
 import apiClient from './client';
 
 // Candidate hiring pipeline status
-export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+// Candidate hiring pipeline status
+export type CandidateStatus = 'position_applied' | 'initial_screening' | 'ai_selected' | 'questions_generated' | 'email_sent' | 'interview_set' | 'hired' | 'rejected';
 
 export const CANDIDATE_STATUS_OPTIONS: { value: CandidateStatus; label: string; color: string }[] = [
-  { value: 'new', label: 'New', color: 'blue' },
-  { value: 'screening', label: 'Screening', color: 'cyan' },
-  { value: 'interview', label: 'Interview', color: 'purple' },
-  { value: 'offer', label: 'Offer', color: 'amber' },
+  { value: 'position_applied', label: 'Applied', color: 'blue' },
+  { value: 'initial_screening', label: 'Screening', color: 'cyan' },
+  { value: 'ai_selected', label: 'AI Selected', color: 'purple' },
+  { value: 'questions_generated', label: 'Q&A', color: 'indigo' },
+  { value: 'email_sent', label: 'Contacted', color: 'pink' },
+  { value: 'interview_set', label: 'Interview', color: 'orange' },
   { value: 'hired', label: 'Hired', color: 'green' },
   { value: 'rejected', label: 'Rejected', color: 'red' },
 ];
@@ -80,10 +83,11 @@ export const screeningApi = {
     page = 1,
     limit = 10,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    jobId?: string
   ) => {
     const response = await apiClient.get<PaginatedScreeningResponse>('/screening_runs/', {
-      params: { user_id: userId, page, limit, start_date: startDate, end_date: endDate },
+      params: { user_id: userId, page, limit, start_date: startDate, end_date: endDate, job_details_id: jobId },
     });
     return response.data;
   },
@@ -103,6 +107,18 @@ export const screeningApi = {
         'Content-Type': 'multipart/form-data',
       },
       timeout: 300000, // 5 minutes timeout for Deep Analysis
+    });
+    return response.data;
+  },
+
+  rankExistingCandidates: async (userId: string, jobDetailsId: string, deepAnalysis: boolean, candidateIds?: string[]) => {
+    const response = await apiClient.post('/rank/existing', {
+        user_id: userId,
+        job_details_id: jobDetailsId,
+        deep_analysis: deepAnalysis,
+        candidate_ids: candidateIds
+    }, {
+      timeout: 300000,
     });
     return response.data;
   },

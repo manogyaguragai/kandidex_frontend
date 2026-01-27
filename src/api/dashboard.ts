@@ -26,6 +26,13 @@ export const dashboardApi = {
     return response.data;
   },
 
+  getJob: async (userId: string, jobId: string) => {
+    const response = await apiClient.get<Job>(`/dashboard/job/${jobId}`, {
+        params: { user_id: userId }
+    });
+    return response.data;
+  },
+
   addJob: async (userId: string, jobRole: string, jobDescription: string, status = 'active') => {
     const response = await apiClient.post('/dashboard/add_job', {
       user_id: userId,

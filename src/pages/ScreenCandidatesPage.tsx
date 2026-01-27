@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,8 @@ import {
   Sparkles,
   FileSearch,
   Zap,
-  Target
+  Target,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -29,8 +30,15 @@ import { dashboardApi } from "@/api/dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { resumeApi } from "@/api/resume";
+
 const ScreenCandidatesPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const jobIdParam = searchParams.get("jobId");
+
   const [step, setStep] = useState(1);
   const [files, setFiles] = useState<File[]>([]);
   const [jobDescription, setJobDescription] = useState("");
@@ -39,12 +47,63 @@ const ScreenCandidatesPage = () => {
   const [useDeepAnalysis, setUseDeepAnalysis] = useState(false);
   const [results, setResults] = useState<any>(null);
 
-  // Fetch user's jobs for selection
+  // Selection State
+  const [availableCandidates, setAvailableCandidates] = useState<any[]>([]);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+
+  // New state for existing candidates mode
+  const [screenMode, setScreenMode] = useState<'upload' | 'existing'>('upload');
+  const [existingResumesCount, setExistingResumesCount] = useState(0);
+
+  // Fetch user's jobs for selection (keep this for the dropdown)
   const { data: jobsData } = useQuery({
     queryKey: ["userJobs", user?.user_id],
     queryFn: () => dashboardApi.getAllJobs(user!.user_id, 1, 100),
     enabled: !!user?.user_id
   });
+
+  // Fetch specific job details if jobIdParam is present
+  const { data: specificJobData } = useQuery({
+    queryKey: ["job", jobIdParam],
+    queryFn: () => dashboardApi.getJob(user!.user_id, jobIdParam!),
+    enabled: !!user?.user_id && !!jobIdParam,
+  });
+
+  // Handle URL Job ID - Pre-populate from specific job fetch
+  useEffect(() => {
+    const initJob = async () => {
+      if (jobIdParam && specificJobData) {
+        setSelectedJobId(specificJobData.id);
+        setJobRole(specificJobData.job_role);
+        setJobDescription(specificJobData.job_description);
+
+        try {
+          // Fetch ALL resumes for this job to allow selection
+          const resumes = await resumeApi.getResumesByJobId(user!.user_id, jobIdParam, undefined, undefined, 1, 100);
+
+          if (resumes.results.length > 0) {
+            setAvailableCandidates(resumes.results);
+            // Default: Select 'position_applied' candidates initially
+            const pending = resumes.results.filter((r: any) => r.phase === 'position_applied');
+            // If there are applied candidates, select them. Otherwise (if all already screened), select none or let them choose.
+            const initialSelection = pending.length > 0 ? pending.map((r: any) => r._id) : [];
+
+            setSelectedCandidateIds(initialSelection);
+            setExistingResumesCount(pending.length);
+            setScreenMode('existing');
+            setStep(2);
+          } else {
+            setScreenMode('upload');
+            setStep(1);
+          }
+
+        } catch (e) {
+          console.error("Failed to check existing resumes", e);
+        }
+      }
+    };
+    initJob();
+  }, [jobIdParam, specificJobData, user]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFiles(prev => [...prev, ...acceptedFiles]);
@@ -67,21 +126,33 @@ const ScreenCandidatesPage = () => {
 
   const screeningMutation = useMutation({
     mutationFn: async () => {
-      const formData = new FormData();
-      formData.append("user_id", user!.user_id);
-      formData.append("job_role", jobRole);
-      formData.append("job_desc", jobDescription);
-      formData.append("deep_analysis", useDeepAnalysis.toString());
+      if (screenMode === 'existing') {
+        if (selectedCandidateIds.length === 0) {
+          throw new Error("No candidates selected");
+        }
+        return await screeningApi.rankExistingCandidates(
+          user!.user_id,
+          selectedJobId,
+          useDeepAnalysis,
+          selectedCandidateIds
+        );
+      } else {
+        const formData = new FormData();
+        formData.append("user_id", user!.user_id);
+        formData.append("job_role", jobRole);
+        formData.append("job_desc", jobDescription);
+        formData.append("deep_analysis", useDeepAnalysis.toString());
 
-      files.forEach(file => {
-        formData.append("files", file);
-      });
+        files.forEach(file => {
+          formData.append("files", file);
+        });
 
-      if (selectedJobId !== "new") {
-        formData.append("job_details_id", selectedJobId);
+        if (selectedJobId !== "new") {
+          formData.append("job_details_id", selectedJobId);
+        }
+
+        return await screeningApi.rankCandidates(formData);
       }
-      
-      return await screeningApi.rankCandidates(formData);
     },
     onSuccess: (data) => {
       setResults(data);
@@ -90,9 +161,23 @@ const ScreenCandidatesPage = () => {
     },
     onError: (error) => {
       console.error(error);
-      toast.error("Screening failed. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Screening failed. Please try again.");
     }
   });
+
+  const toggleCandidate = (id: string) => {
+    setSelectedCandidateIds(prev =>
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedCandidateIds.length === availableCandidates.length) {
+      setSelectedCandidateIds([]);
+    } else {
+      setSelectedCandidateIds(availableCandidates.map(c => c._id));
+    }
+  };
 
   const handleNext = () => {
     if (step === 1 && files.length === 0) {
@@ -100,6 +185,10 @@ const ScreenCandidatesPage = () => {
       return;
     }
     if (step === 2) {
+      if (screenMode === 'existing' && selectedCandidateIds.length === 0) {
+        toast.error("Please select at least one candidate to screen.");
+        return;
+      }
       if (selectedJobId === "new" && (!jobRole || !jobDescription)) {
         toast.error("Please provide job role and description.");
         return;
@@ -250,13 +339,59 @@ const ScreenCandidatesPage = () => {
             <div className="glass-card p-8 rounded-2xl space-y-6">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold">Job Context</h2>
-                <p className="text-muted-foreground">Select a job or define a new one for AI reference.</p>
+                <p className="text-muted-foreground">Confirm details for screening.</p>
               </div>
+
+              {screenMode === 'existing' && (
+                <div className="space-y-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 p-4 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500/20 rounded-full">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Select Candidates to Screen</p>
+                        <p className="text-xs opacity-80">{selectedCandidateIds.length} candidates selected ({availableCandidates.length} available)</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="hover:bg-blue-500/20">
+                      {selectedCandidateIds.length === availableCandidates.length ? 'Deselect All' : 'Select All'}
+                    </Button>
+                  </div>
+
+                  {/* Scrollable Candidate List */}
+                  <div className="border border-border rounded-xl overflow-hidden bg-background/50 h-[250px] overflow-y-auto custom-scrollbar">
+                    {availableCandidates.map((candidate) => (
+                      <div
+                        key={candidate._id}
+                        onClick={() => toggleCandidate(candidate._id)}
+                        className={`flex items-center justify-between p-3 border-b border-border/50 cursor-pointer transition-colors hover:bg-muted/50 ${selectedCandidateIds.includes(candidate._id) ? 'bg-primary/5' : ''}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedCandidateIds.includes(candidate._id) ? 'bg-primary border-primary text-white' : 'border-muted-foreground'}`}>
+                            {selectedCandidateIds.includes(candidate._id) && <Check className="w-3 h-3" />}
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground uppercase">
+                            {candidate.name.substring(0, 2)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{candidate.name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{candidate.phase.replace('_', ' ')}</p>
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(candidate.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Select Job</Label>
-                  <Select value={selectedJobId} onValueChange={handleJobSelect}>
+                  <Select value={selectedJobId} onValueChange={handleJobSelect} disabled={screenMode === 'existing'}>
                     <SelectTrigger className="h-12 bg-background/50 border-input focus:ring-primary/50">
                         <SelectValue placeholder="Select a job or create new" />
                       </SelectTrigger>
@@ -277,7 +412,7 @@ const ScreenCandidatesPage = () => {
                       value={jobRole}
                       onChange={(e) => setJobRole(e.target.value)}
                       className="h-11 bg-background/50"
-                      disabled={selectedJobId !== "new"}
+                      disabled={selectedJobId !== "new" || screenMode === 'existing'}
                     />
                   </div>
                   <div className="space-y-2">
@@ -287,7 +422,7 @@ const ScreenCandidatesPage = () => {
                       className="min-h-[200px] bg-background/50 resize-y p-4 leading-relaxed"
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
-                      disabled={selectedJobId !== "new"}
+                      disabled={selectedJobId !== "new" || screenMode === 'existing'}
                     />
                   </div>
                 </div>
@@ -308,13 +443,13 @@ const ScreenCandidatesPage = () => {
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button variant="outline" size="lg" onClick={handleBack} className="border-input hover:bg-muted">Back</Button>
+              <Button variant="outline" size="lg" onClick={handleBack} className="border-input hover:bg-muted" disabled={screenMode === 'existing'}>Back</Button>
               <Button
                 onClick={handleNext}
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/20"
               >
-                Analyze Candidates
+                {screenMode === 'existing' ? `Screen ${selectedCandidateIds.length} Candidates` : 'Analyze Candidates'}
               </Button>
             </div>
           </motion.div>
@@ -647,8 +782,8 @@ const ScreenCandidatesPage = () => {
                 <Button variant="outline" onClick={() => { setStep(1); setFiles([]); setResults(null); }}>
                   Start New
                 </Button>
-                <Button onClick={() => window.location.href = '/dashboard'}>
-                  Back to Dashboard
+                <Button onClick={() => navigate(selectedJobId && selectedJobId !== 'new' ? `/jobs/${selectedJobId}` : '/dashboard')}>
+                  {selectedJobId && selectedJobId !== 'new' ? 'Back to Job' : 'Back to Dashboard'}
                 </Button>
               </div>
             </div>

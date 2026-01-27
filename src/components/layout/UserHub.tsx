@@ -12,6 +12,9 @@ import {
   LogOut,
   Settings,
   MessageSquare,
+  Briefcase,
+  FileText,
+  Clock
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -66,6 +69,14 @@ export const UserHub = () => {
                 <LayoutDashboard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Dashboard</span>
             </Link>
+          <Link to="/jobs" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
+            <Briefcase className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Jobs</span>
+          </Link>
+          <Link to="/screen-candidates" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
+            <FileText className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Screening</span>
+          </Link>
           <Link to="/questions" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
             <MessageSquare className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Questions</span>
@@ -74,6 +85,10 @@ export const UserHub = () => {
                 <CreditCard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Billing</span>
             </Link>
+          <Link to="/screening-history" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
+            <Clock className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">History</span>
+          </Link>
             <Link to="/settings" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
                 <Settings className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Settings</span>

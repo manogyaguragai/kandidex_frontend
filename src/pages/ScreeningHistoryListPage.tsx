@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthContext";
 import AppLayout from "@/components/AppLayout";
@@ -17,17 +17,20 @@ import {
   ChevronRight,
   Target,
   Zap,
+  ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ScreeningHistoryListPage = () => {
   const { user } = useAuth();
   const [page, setPage] = useState(1);
+  const [searchParams] = useSearchParams();
+  const jobId = searchParams.get("jobId");
   const limit = 10;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["screeningRuns", user?.user_id, page],
-    queryFn: () => screeningApi.getScreeningRuns(user!.user_id, page, limit),
+    queryKey: ["screeningRuns", user?.user_id, page, jobId],
+    queryFn: () => screeningApi.getScreeningRuns(user!.user_id, page, limit, undefined, undefined, jobId || undefined),
     enabled: !!user?.user_id,
   });
 
@@ -59,14 +62,20 @@ const ScreeningHistoryListPage = () => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
+            {jobId && (
+              <Link to={`/jobs/${jobId}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors mb-2 group">
+                <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                Back to Job
+              </Link>
+            )}
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight gradient-text mb-2">
-              Screening History
+              {jobId && data?.results[0]?.job_role ? `${data.results[0].job_role} History` : "Screening History"}
             </h1>
             <p className="text-muted-foreground text-lg">
-              View all your past screening runs and candidate analyses.
+              {jobId ? "View screening runs for this specific job." : "View all your past screening runs and candidate analyses."}
             </p>
           </div>
-          <Link to="/screen-candidates">
+          <Link to={jobId ? `/screen-candidates?jobId=${jobId}` : "/screen-candidates"}>
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
               <Zap className="w-4 h-4 mr-2" /> New Screening
             </Button>

@@ -17,6 +17,7 @@ import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import DemoPage from "@/pages/DemoPage";
 import JobsPage from "@/pages/JobsPage";
+import JobDetailsPage from "@/pages/JobDetailsPage";
 import ScreeningHistoryPage from "@/pages/ScreeningHistoryPage";
 import ScreeningHistoryListPage from "@/pages/ScreeningHistoryListPage";
 import QuestionsPage from "@/pages/QuestionsPage";
@@ -52,6 +53,7 @@ function App() {
                 {/* Protected Routes (Layout is applied inside these pages components or should be wrapped here) */}
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/jobs" element={<JobsPage />} />
+                <Route path="/jobs/:jobId" element={<JobDetailsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/billing" element={<BillingPage />} />
                 <Route path="/screen-candidates" element={<ScreenCandidatesPage />} />
