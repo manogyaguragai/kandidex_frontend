@@ -48,14 +48,16 @@ import { GenerateQuestionsModal } from "@/components/screening/GenerateQuestions
 // Status color mapping for light/dark mode
 const getStatusStyles = (status: CandidateStatus) => {
   const styles: Record<CandidateStatus, string> = {
-    new: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    screening: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
-    interview: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-    offer: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    position_applied: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    initial_screening: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
+    ai_selected: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    questions_generated: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
+    email_sent: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
+    interview_set: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
     hired: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
     rejected: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
   };
-  return styles[status] || styles.new;
+  return styles[status] || styles.position_applied;
 };
 
 const ScreeningHistoryPage = () => {
