@@ -84,7 +84,6 @@ const JobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<CandidateStatus | 'all'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [jobPhaseCounts, setJobPhaseCounts] = useState<Record<string, PhaseCounts>>({});
@@ -243,43 +242,16 @@ const JobsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="bg-card border border-border/50 p-2 rounded-xl flex items-center gap-3 flex-1 shadow-sm">
-            <Search className="w-5 h-5 text-muted-foreground ml-2" />
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
-            />
-          </div>
-
-          {/* Phase Filter Chips - Only showing key phases to save space */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${statusFilter === 'all'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                }`}
-            >
-              All
-            </button>
-            {CANDIDATE_STATUS_OPTIONS.slice(0, 5).map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setStatusFilter(option.value)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${statusFilter === option.value
-                  ? `${PHASE_COLORS[option.value].bg} ${PHASE_COLORS[option.value].text} border-current`
-                  : 'bg-background border-border text-muted-foreground hover:bg-muted/50'
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+      {/* Search */}
+      <div className="bg-card border border-border/50 p-2 rounded-xl flex items-center gap-3 shadow-sm max-w-xl">
+        <Search className="w-5 h-5 text-muted-foreground ml-2" />
+        <input
+          type="text"
+          placeholder="Search jobs..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
+        />
         </div>
 
         {/* Jobs List */}
