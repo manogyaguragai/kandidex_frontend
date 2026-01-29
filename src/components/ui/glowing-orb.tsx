@@ -47,9 +47,25 @@ export const GlowingOrb = () => {
           className="absolute inset-12 rounded-full border border-white/5 border-dashed"
         />
         
-        {/* Center Glow */}
+        {/* Center Glow with Kandidex Logo */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 bg-white/10 backdrop-blur-3xl rounded-full shadow-[0_0_100px_rgba(59,130,246,0.5)] z-10" />
+          <div className="w-32 h-32 bg-white/20 dark:bg-white/10 backdrop-blur-3xl rounded-full shadow-[0_0_100px_rgba(59,130,246,0.5)] z-10 flex items-center justify-center">
+            <motion.div
+              animate={{
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center p-1 shadow-lg"
+            >
+              <div className="bg-white dark:bg-slate-900 w-full h-full rounded-lg flex items-center justify-center">
+                <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-purple-600 text-4xl">K</span>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>
