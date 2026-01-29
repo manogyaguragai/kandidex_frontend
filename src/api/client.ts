@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Don't redirect if it's a login attempt (let the component handle the error)
-    if (error.response?.status === 401 && !error.config.url?.endsWith('/login') && !error.config.url?.includes('/token')) {
+    if (error.response?.status === 401 && !error.config.url?.endsWith('/login') && !error.config.url?.includes('/token') && !error.config.url?.endsWith('/reset-password')) {
       useAuthStore.getState().logout();
       window.location.href = '/';
     }
