@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   Calendar,
-
+  Edit,
   FileText,
   Filter,
   Search,
@@ -23,7 +23,8 @@ import {
   Mail,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
@@ -51,8 +52,14 @@ const JobDetailsPage = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [editFormData, setEditFormData] = useState({
+    job_role: '',
+    job_description: '',
+    status: 'active'
+  });
   
   // Filters State
   const [phaseFilter, setPhaseFilter] = useState<string | undefined>(undefined);
@@ -161,15 +168,29 @@ const JobDetailsPage = () => {
               }`}>
                 {job.status}
               </span>
+              <button
+                onClick={() => {
+                  setEditFormData({
+                    job_role: job.job_role,
+                    job_description: job.job_description,
+                    status: job.status
+                  });
+                  setIsEditModalOpen(true);
+                }}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Edit Job"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
             </div>
             <p className="text-muted-foreground max-w-2xl truncate">
                {job.job_description}
             </p>
           </div>
           <div className="flex gap-3">
-            <Button 
-                variant="outline" 
-                className="gap-2 bg-background hover:bg-muted"
+            <Button
+              variant="outline"
+              className="gap-2 bg-background hover:bg-muted"
                 onClick={() => setIsUploadModalOpen(true)}
             >
               <Upload className="w-4 h-4" />
@@ -426,6 +447,136 @@ const JobDetailsPage = () => {
                     {uploadMutation.isPending ? "Uploading..." : `Upload ${uploadedFiles.length > 0 ? uploadedFiles.length : ''} Files`}
                  </Button>
               </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Job Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl w-full max-w-xl p-6 relative overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
+                    <Briefcase className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Job Opening</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Update job details</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsEditModalOpen(false)}>
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!user?.user_id || !jobId) return;
+
+                try {
+                  await dashboardApi.updateJob(
+                    user.user_id,
+                    jobId,
+                    editFormData.job_role,
+                    editFormData.job_description,
+                    editFormData.status
+                  );
+                  toast.success('Job updated successfully');
+                  setIsEditModalOpen(false);
+                  queryClient.invalidateQueries({ queryKey: ["job", jobId] });
+                  queryClient.invalidateQueries({ queryKey: ["jobs"] });
+                } catch (error) {
+                  toast.error('Failed to update job');
+                  console.error(error);
+                }
+              }} className="space-y-5">
+
+                {/* Job Role Field */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Job Role
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.job_role}
+                    onChange={(e) => setEditFormData({ ...editFormData, job_role: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    placeholder="e.g. Senior Frontend Engineer"
+                  />
+                </div>
+
+                {/* Description Field */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Description
+                  </label>
+                  <textarea
+                    required
+                    value={editFormData.job_description}
+                    onChange={(e) => setEditFormData({ ...editFormData, job_description: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all h-28 resize-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    placeholder="Job requirements, responsibilities, tech stack..."
+                  />
+                </div>
+
+                {/* Status Selector */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Status
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditFormData({ ...editFormData, status: 'active' })}
+                      className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all border cursor-pointer ${editFormData.status === 'active'
+                        ? 'bg-green-50 dark:bg-green-500/10 border-green-500 text-green-700 dark:text-green-400'
+                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-750'
+                        }`}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <span className={editFormData.status === 'active' ? 'text-green-500' : 'text-gray-400'}>●</span>
+                        Active
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditFormData({ ...editFormData, status: 'inactive' })}
+                      className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all border cursor-pointer ${editFormData.status === 'inactive'
+                        ? 'bg-gray-100 dark:bg-gray-500/10 border-gray-500 text-gray-700 dark:text-gray-400'
+                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-750'
+                        }`}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <span className={editFormData.status === 'inactive' ? 'text-gray-500' : 'text-gray-400'}>○</span>
+                        Inactive
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" className="bg-primary text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
 
             </motion.div>
           </div>
