@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -24,6 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuthStore();
 
@@ -39,6 +40,7 @@ export const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    setLoginError(null);
     try {
       // Real API call
       const response = await authApi.login(data.email, data.password);
@@ -79,7 +81,9 @@ export const LoginPage = () => {
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.response?.data?.detail || "Invalid credentials. Please try again.");
+      const errorMessage = error.response?.data?.detail || "Invalid credentials. Please try again.";
+      setLoginError(errorMessage);
+      toast.error("Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +118,17 @@ export const LoginPage = () => {
           
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {loginError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3 text-destructive"
+                >
+                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <div className="text-sm font-medium leading-tight">{loginError}</div>
+                </motion.div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Email</label>
                 <div className="relative">
@@ -123,6 +138,7 @@ export const LoginPage = () => {
                     type="email" 
                     placeholder="name@example.com" 
                     className="pl-10"
+                    onChange={() => setLoginError(null)}
                   />
                 </div>
                 {errors.email && <span className="text-xs text-destructive">{errors.email.message}</span>}
@@ -142,6 +158,7 @@ export const LoginPage = () => {
                     type={showPassword ? "text" : "password"} 
                     placeholder="••••••••" 
                     className="pl-10 pr-10"
+                    onChange={() => setLoginError(null)}
                   />
                   <button
                     type="button"
