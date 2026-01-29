@@ -112,7 +112,7 @@ export const Hero = () => {
                   <Shield className="w-5 h-5 text-purple-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">99%</div>
+                  <div className="text-2xl font-bold">90% +</div>
                   <div className="text-xs text-muted-foreground">Accuracy Rate</div>
                 </div>
               </AnimatedCard>
