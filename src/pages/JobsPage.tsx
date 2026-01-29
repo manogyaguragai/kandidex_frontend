@@ -460,7 +460,7 @@ const JobsPage: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/50 dark:bg-black/50"
           onClick={() => setIsModalOpen(false)}
         >
           <motion.div
@@ -472,7 +472,7 @@ const JobsPage: React.FC = () => {
             className="w-full max-w-xl relative"
           >
             {/* Modal Card */}
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-background border border-border rounded-2xl shadow-xl overflow-hidden">
 
               {/* Header */}
               <div className="relative px-6 pt-6 pb-5 border-b border-gray-100 dark:border-gray-800">
