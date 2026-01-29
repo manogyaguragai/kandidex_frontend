@@ -8,8 +8,9 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bell, Lock, Sliders, Save, LogOut } from "lucide-react";
+import { Bell, Lock, Sliders, Save, LogOut, AlertCircle, CheckCircle } from "lucide-react";
 import { settingsApi } from "@/api/settings";
+import { authApi } from "@/api/auth";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,13 @@ const SettingsPage = () => {
   const [phase2Limit, setPhase2Limit] = useState(10);
   const [questionsCount, setQuestionsCount] = useState(3);
 
+  // State for Password Reset
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+
   const updateSettingsMutation = useMutation({
     mutationFn: (data: any) => settingsApi.updateRankingSettings(user!.user_id, data),
     onSuccess: () => {
@@ -44,6 +52,52 @@ const SettingsPage = () => {
       phase1_ranking_number: phase1Limit,
       phase2_ranking_number: phase2Limit,
       number_of_questions_to_generate: questionsCount
+    });
+  };
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (data: any) => authApi.resetPassword(data),
+    onSuccess: () => {
+      const successMsg = "Password updated successfully";
+      toast.success(successMsg);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setResetError(null);
+      setResetSuccess(successMsg);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || "Failed to update password";
+      toast.error(errorMessage);
+      setResetError(errorMessage);
+      setResetSuccess(null);
+      console.error(error);
+    }
+  });
+
+  const handleUpdatePassword = () => {
+    setResetError(null);
+    setResetSuccess(null);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setResetError("Please fill in all password fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setResetError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setResetError("Password must be at least 8 characters long");
+      return;
+    }
+
+    resetPasswordMutation.mutate({
+      email: user?.email,
+      old_password: currentPassword,
+      new_password: newPassword
     });
   };
 
@@ -214,21 +268,63 @@ const SettingsPage = () => {
               <CardDescription>Manage your password and account security.</CardDescription>
              </CardHeader>
              <CardContent className="space-y-4">
+              {resetError && (
+                <div className="bg-destructive/15 text-destructive p-3 rounded-md text-sm flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  {resetError}
+                </div>
+              )}
+              {resetSuccess && (
+                <div className="bg-green-500/15 text-green-600 dark:text-green-400 p-3 rounded-md text-sm flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  {resetSuccess}
+                </div>
+              )}
                <div className="grid gap-2">
                   <Label>Current Password</Label>
-                  <Input type="password" />
+                <Input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    if (resetError) setResetError(null);
+                    if (resetSuccess) setResetSuccess(null);
+                  }}
+                />
                </div>
                <div className="grid gap-2">
                   <Label>New Password</Label>
-                  <Input type="password" />
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (resetError) setResetError(null);
+                    if (resetSuccess) setResetSuccess(null);
+                  }}
+                />
                </div>
                <div className="grid gap-2">
                   <Label>Confirm Password</Label>
-                  <Input type="password" />
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (resetError) setResetError(null);
+                    if (resetSuccess) setResetSuccess(null);
+                  }}
+                />
                </div>
              </CardContent>
              <CardFooter className="flex justify-between items-center">
-                <Button variant="outline">Update Password</Button>
+              <Button
+                variant="outline"
+                onClick={handleUpdatePassword}
+                disabled={resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? "Updating..." : "Update Password"}
+              </Button>
                 <div className="text-xs text-muted-foreground">Two-factor authentication coming soon.</div>
              </CardFooter>
            </Card>

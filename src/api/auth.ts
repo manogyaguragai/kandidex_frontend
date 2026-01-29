@@ -42,5 +42,10 @@ export const authApi = {
     return response.data;
   },
   
+  resetPassword: async (resetData: any): Promise<any> => {
+    const response = await apiClient.post('/reset-password', resetData);
+    return response.data;
+  },
+
   // Add other auth methods if needed
 };
