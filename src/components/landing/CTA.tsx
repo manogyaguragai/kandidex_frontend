@@ -44,7 +44,7 @@ export const CTA = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
               <Button size="xl" className="bg-white text-blue-900 hover:bg-blue-50 shadow-xl border-0 text-lg font-bold px-10 h-16" asChild>
-                <Link to="/register">
+                <Link to="/login">
                   Get Started for Free <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>

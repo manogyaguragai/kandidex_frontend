@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/components/auth/AuthContext";
-import AppLayout from "@/components/AppLayout";
+
 import { 
   screeningApi, 
   ScreeningCandidate, 
@@ -185,7 +185,6 @@ const ScreeningHistoryPage = () => {
 
   if (isLoading) {
     return (
-      <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
           <div className="relative">
             <div className="w-24 h-24 rounded-full border-4 border-muted flex items-center justify-center">
@@ -197,14 +196,12 @@ const ScreeningHistoryPage = () => {
             <h3 className="text-xl font-semibold gradient-text">Loading Screening Details</h3>
             <p className="text-muted-foreground">Fetching run data...</p>
           </div>
-        </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (error || !run) {
     return (
-      <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
           <div className="p-6 rounded-full bg-red-500/10">
             <AlertTriangle className="w-16 h-16 text-red-500" />
@@ -218,13 +215,12 @@ const ScreeningHistoryPage = () => {
           <Button onClick={() => navigate("/dashboard")} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Button>
-        </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       {/* Generate Questions Modal */}
       {selectedCandidateForQuestions && (
         <GenerateQuestionsModal
@@ -401,7 +397,7 @@ const ScreeningHistoryPage = () => {
             ))}
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 };
 

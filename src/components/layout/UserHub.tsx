@@ -1,30 +1,24 @@
 import { useAuthStore } from "@/store/authStore";
+import { getMainDomainUrl } from "@/lib/subdomain";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  CreditCard,
-  LayoutDashboard,
   LogOut,
   Settings,
-  MessageSquare,
-  Briefcase,
-  FileText,
-  Clock
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export const UserHub = () => {
   const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.href = getMainDomainUrl();
   };
 
   if (!user) return null;
@@ -70,35 +64,14 @@ export const UserHub = () => {
         <Separator className="bg-border/50" />
 
         {/* Navigation Grid */}
-        <div className="p-2 grid grid-cols-4 gap-1">
-            <Link to="/dashboard" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-                <LayoutDashboard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Dashboard</span>
+        {/* Settings Link */}
+        <div className="p-2">
+          <Button variant="ghost" asChild className="w-full justify-start text-muted-foreground hover:text-foreground h-9">
+            <Link to="/settings">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
             </Link>
-          <Link to="/jobs" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-            <Briefcase className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Jobs</span>
-          </Link>
-          <Link to="/screen-candidates" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-            <FileText className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Screening</span>
-          </Link>
-          <Link to="/questions" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-            <MessageSquare className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Questions</span>
-          </Link>
-            <Link to="/billing" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-                <CreditCard className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Billing</span>
-            </Link>
-          <Link to="/screening-history" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-            <Clock className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">History</span>
-          </Link>
-            <Link to="/settings" className="flex flex-col items-center justify-center gap-1 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
-                <Settings className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground">Settings</span>
-            </Link>
+          </Button>
         </div>
 
         <Separator className="bg-border/50" />

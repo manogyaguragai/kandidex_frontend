@@ -6,7 +6,7 @@ import { Check, CreditCard, Shield, Sparkles, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import AppLayout from "@/components/AppLayout";
+
 import { motion } from "framer-motion";
 
 const BillingPage = () => {
@@ -39,7 +39,6 @@ const BillingPage = () => {
   };
 
   return (
-    <AppLayout>
       <div className="max-w-6xl mx-auto space-y-12">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 pb-1">
@@ -218,7 +217,7 @@ const BillingPage = () => {
           )}
         </div>
       </div>
-    </AppLayout>
+
   );
 };
 

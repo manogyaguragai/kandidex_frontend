@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { MarketingLayout } from "@/components/MarketingLayout";
+import { PlaygroundLayout } from "@/components/PlaygroundLayout";
+import { isPlayground, getPlaygroundUrl } from "@/lib/subdomain";
 
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
@@ -33,36 +35,54 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const onPlayground = isPlayground();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <AuthProvider>
           <BrowserRouter>
             <div className="min-h-screen flex flex-col bg-background">
-              {/* Navbar is handled inside Layout for protected pages or globally if appropriately conditionally rendered */}
               <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<MarketingLayout><HomePage /></MarketingLayout>} />
-                <Route path="/features" element={<MarketingLayout><FeaturesPage /></MarketingLayout>} />
-                <Route path="/pricing" element={<MarketingLayout><PricingPage /></MarketingLayout>} />
-                <Route path="/about" element={<MarketingLayout><AboutPage /></MarketingLayout>} />
-                <Route path="/contact" element={<MarketingLayout><ContactPage /></MarketingLayout>} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/demo" element={<MarketingLayout><DemoPage /></MarketingLayout>} />
+                {onPlayground ? (
+                  // Playground Routes
+                  <>
+                    <Route path="/login" element={<LoginPage />} />
 
-                {/* Protected Routes (Layout is applied inside these pages components or should be wrapped here) */}
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/jobs" element={<JobsPage />} />
-                <Route path="/jobs/:jobId" element={<JobDetailsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/billing" element={<BillingPage />} />
-                <Route path="/screen-candidates" element={<ScreenCandidatesPage />} />
-                <Route path="/screening-history/:runId" element={<ScreeningHistoryPage />} />
-                <Route path="/screening-history" element={<ScreeningHistoryListPage />} />
-                <Route path="/questions" element={<QuestionsPage />} />
+                    {/* Protected Routes wrapped in PlaygroundLayout */}
+                    <Route path="/dashboard" element={<PlaygroundLayout><DashboardPage /></PlaygroundLayout>} />
+                    <Route path="/jobs" element={<PlaygroundLayout><JobsPage /></PlaygroundLayout>} />
+                    <Route path="/jobs/:jobId" element={<PlaygroundLayout><JobDetailsPage /></PlaygroundLayout>} />
+                    <Route path="/settings" element={<PlaygroundLayout><SettingsPage /></PlaygroundLayout>} />
+                    <Route path="/billing" element={<PlaygroundLayout><BillingPage /></PlaygroundLayout>} />
+                    <Route path="/screen-candidates" element={<PlaygroundLayout><ScreenCandidatesPage /></PlaygroundLayout>} />
+                    <Route path="/screening-history/:runId" element={<PlaygroundLayout><ScreeningHistoryPage /></PlaygroundLayout>} />
+                    <Route path="/screening-history" element={<PlaygroundLayout><ScreeningHistoryListPage /></PlaygroundLayout>} />
+                    <Route path="/questions" element={<PlaygroundLayout><QuestionsPage /></PlaygroundLayout>} />
 
-                {/* 404 Route */}
-                <Route path="*" element={<NotFoundPage />} />
+                    {/* Redirect root to dashboard (or login if handled by auth guard) */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+                    {/* 404 for Playground */}
+                    <Route path="*" element={<NotFoundPage />} />
+                  </>
+                ) : (
+                  // Marketing Routes
+                  <>
+                    <Route path="/" element={<MarketingLayout><HomePage /></MarketingLayout>} />
+                    <Route path="/features" element={<MarketingLayout><FeaturesPage /></MarketingLayout>} />
+                    <Route path="/pricing" element={<MarketingLayout><PricingPage /></MarketingLayout>} />
+                    <Route path="/about" element={<MarketingLayout><AboutPage /></MarketingLayout>} />
+                    <Route path="/contact" element={<MarketingLayout><ContactPage /></MarketingLayout>} />
+                      <Route path="/demo" element={<MarketingLayout><DemoPage /></MarketingLayout>} />
+
+                      {/* Redirect login on main site to playground login */}
+                      <Route path="/login" element={<NavigateConstant to={getPlaygroundUrl() + "/login"} />} />
+
+                      {/* 404 for Marketing */}
+                      <Route path="*" element={<NotFoundPage />} />
+                  </>
+                )}
               </Routes>
             </div>
             <Toaster position="bottom-right" richColors />
@@ -72,5 +92,11 @@ function App() {
     </QueryClientProvider>
   );
 }
+
+// Helper for external redirect
+const NavigateConstant = ({ to }: { to: string }) => {
+  window.location.href = to;
+  return null;
+};
 
 export default App;

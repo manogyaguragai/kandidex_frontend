@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Menu, Moon, Sun, LogIn } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-// Dropdown imports removed as they are replaced by UserHub
 import { useAuthStore } from "@/store/authStore";
 import { UserHub } from "@/components/layout/UserHub";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Plus, History } from "lucide-react";
 import { navbarVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
-import { getPlaygroundUrl } from "@/lib/subdomain";
+import { getMainDomainUrl } from "@/lib/subdomain";
 
-export const Navbar = () => {
+export const PlaygroundNavbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   // Avoid hydration mismatch
   useEffect(() => {
@@ -40,14 +40,31 @@ export const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Features", path: "/features" },
-    { name: "Pricing", path: "/pricing" },
-    { name: "About", path: "/about" },
-    { name: "Contact", path: "/contact" },
+    { name: "Dashboard", path: "/dashboard" },
+    { 
+      name: "Screening", 
+      path: "/screen-candidates",
+      dropdown: [
+        { name: "New Screening", path: "/screen-candidates", icon: Plus },
+        { name: "Screening History", path: "/screening-history", icon: History },
+      ]
+    },
+    { name: "Jobs", path: "/jobs" },
+    { name: "Questions", path: "/questions" },
+    { name: "Billing", path: "/billing" },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const handleLogout = () => {
+    logout();
+    window.location.href = getMainDomainUrl(); // Redirect to main domain after logout
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/screen-candidates' || path === '/screening-history') {
+      return location.pathname.startsWith('/screen-candidates') || location.pathname.startsWith('/screening-history');
+    }
+    return location.pathname === path;
+  };
 
   if (!mounted) return null;
 
@@ -63,8 +80,8 @@ export const Navbar = () => {
     >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          {/* Logo - redirects to dashboard in playground */}
+          <Link to="/dashboard" className="flex items-center gap-2 group">
             <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center p-0.5 group-hover:shadow-glow-blue transition-all duration-500">
               <div className="bg-background w-full h-full rounded-md flex items-center justify-center">
                 <span className="font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-purple-600 text-lg">K</span>
@@ -78,20 +95,44 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary relative group",
-                  isActive(link.path) ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {link.name}
-                <span className={cn(
-                  "absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full",
-                  isActive(link.path) ? "w-full" : ""
-                )} />
-              </Link>
+              link.dropdown ? (
+                <DropdownMenu key={link.name}>
+                  <DropdownMenuTrigger
+                    className={cn(
+                      "flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary outline-none group",
+                      isActive(link.path) ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    {link.name}
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {link.dropdown.map((item) => (
+                      <DropdownMenuItem key={item.name} asChild>
+                        <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary relative group",
+                    isActive(link.path) ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {link.name}
+                  <span className={cn(
+                    "absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full",
+                    isActive(link.path) ? "w-full" : ""
+                  )} />
+                </Link>
+              )
             ))}
           </nav>
 
@@ -109,20 +150,8 @@ export const Navbar = () => {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Auth Buttons */}
-            {isAuthenticated && user ? (
-              <UserHub />
-            ) : (
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" asChild className="hidden lg:inline-flex">
-                    <a href={getPlaygroundUrl() + "/login"}>Sign In</a>
-                </Button>
-                <Button variant="default" asChild className="shadow-glow-sm hover:shadow-glow transition-all">
-                  <Link to="/contact">Contact Sales</Link>
-                </Button>
-              </div>
-            )}
-
+            {/* User Hub */}
+            <UserHub /> 
           </div>
 
           {/* Mobile Menu */}
@@ -162,40 +191,23 @@ export const Navbar = () => {
                   </div>
 
                   <div className="mt-auto flex flex-col gap-4 pb-8">
-                    {isAuthenticated ? (
-                      <>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
-                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                            {user?.initials}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-sm">{user?.email}</span>
-                            <span className="text-xs text-muted-foreground capitalize">{user?.tier} Plan</span>
-                          </div>
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                          {user?.initials}
                         </div>
-                        <SheetClose asChild>
-                          <Button asChild size="lg" className="w-full">
-                            <Link to="/dashboard">Go to Dashboard</Link>
-                          </Button>
-                        </SheetClose>
-                        <Button variant="outline" size="lg" onClick={handleLogout} className="w-full text-destructive hover:text-destructive">
-                          Sign Out
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm">{user?.email}</span>
+                          <span className="text-xs text-muted-foreground capitalize">{user?.tier} Plan</span>
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <Button asChild size="lg" className="w-full">
+                          <Link to="/dashboard">Go to Dashboard</Link>
                         </Button>
-                      </>
-                    ) : (
-                      <>
-                        <SheetClose asChild>
-                          <Button variant="outline" size="lg" asChild className="w-full justify-start">
-                            <Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Sign In</Link>
-                          </Button>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Button size="lg" asChild className="w-full">
-                            <Link to="/contact">Contact Sales</Link>
-                          </Button>
-                        </SheetClose>
-                      </>
-                    )}
+                      </SheetClose>
+                      <Button variant="outline" size="lg" onClick={handleLogout} className="w-full text-destructive hover:text-destructive">
+                        Sign Out
+                      </Button>
                   </div>
                 </div>
               </SheetContent>

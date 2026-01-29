@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
 import { dashboardApi } from "@/api/dashboard";
 import { resumeApi, Resume } from "@/api/resume";
-import AppLayout from "@/components/AppLayout";
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -120,31 +120,27 @@ const JobDetailsPage = () => {
 
   if (isJobLoading) {
     return (
-      <AppLayout>
         <div className="flex h-[80vh] items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!job) {
     return (
-      <AppLayout>
         <div className="text-center py-20">
           <h2 className="text-2xl font-bold">Job not found</h2>
           <Button onClick={() => navigate("/jobs")} className="mt-4">
             Back to Jobs
           </Button>
-        </div>
-      </AppLayout>
+      </div>
     );
   }
 
   const totalPages = candidatesData?.total_pages || 1;
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6 pb-20 min-h-[calc(100vh-200px)]">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -435,7 +431,7 @@ const JobDetailsPage = () => {
           </div>
         )}
       </AnimatePresence>
-    </AppLayout>
+    </>
   );
 };
 
