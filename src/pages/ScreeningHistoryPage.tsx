@@ -27,13 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { GenerateQuestionsModal } from "@/components/screening/GenerateQuestionsModal";
 
 import { CandidateCard } from "@/components/screening/CandidateCard";
