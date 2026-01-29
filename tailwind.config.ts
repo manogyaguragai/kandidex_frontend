@@ -49,11 +49,8 @@ export default {
           700: "#6d28d9",
         },
         accent: {
-          DEFAULT: "#ec4899",
+          DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          400: "#f472b6",
-          500: "#ec4899",
-          600: "#db2777",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

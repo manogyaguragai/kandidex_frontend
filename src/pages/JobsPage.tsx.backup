@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Trash2, Edit, Calendar, Users, ChevronLeft, ChevronRight, Briefcase, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Calendar, Users, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { dashboardApi, Job } from '@/api/dashboard';
@@ -84,6 +84,7 @@ const JobsPage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CandidateStatus | 'all'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [jobPhaseCounts, setJobPhaseCounts] = useState<Record<string, PhaseCounts>>({});
@@ -224,16 +225,9 @@ const JobsPage: React.FC = () => {
     navigate(`/jobs/${jobId}${phase ? `?phase=${phase}` : ''}`);
   };
 
-  // Calculate Aggregated Stats
-  const activeJobsCount = jobs.filter(j => j.status === 'active').length;
-
-  const totalCandidatesCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.total || 0), 0);
-  const interviewsSetCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.interview_set || 0), 0);
-  const hiredCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.hired || 0), 0);
-
   return (
 
-    <div className="space-y-8 min-h-[calc(100vh-12rem)]">
+      <div className="space-y-8 pb-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -249,68 +243,43 @@ const JobsPage: React.FC = () => {
           </button>
         </div>
 
-      {/* Analytics Overview - Stunning Glass Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4"
-      >
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Briefcase className="w-16 h-16 text-blue-500" />
-          </div>
-          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Active Jobs</p>
-          <div className="flex items-end gap-2">
-            <p className="text-3xl font-bold text-foreground">{activeJobsCount}</p>
-            <p className="text-sm text-muted-foreground mb-1.5">/ {jobs.length} total</p>
-          </div>
-          <div className="mt-2 h-1 w-full bg-blue-500/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out"
-              style={{ width: `${(activeJobsCount / (jobs.length || 1)) * 100}%` }}
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="bg-card border border-border/50 p-2 rounded-xl flex items-center gap-3 flex-1 shadow-sm">
+            <Search className="w-5 h-5 text-muted-foreground ml-2" />
+            <input
+              type="text"
+              placeholder="Search jobs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
             />
           </div>
-        </div>
 
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Users className="w-16 h-16 text-purple-500" />
+          {/* Phase Filter Chips - Only showing key phases to save space */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${statusFilter === 'all'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                }`}
+            >
+              All
+            </button>
+            {CANDIDATE_STATUS_OPTIONS.slice(0, 5).map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setStatusFilter(option.value)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all border ${statusFilter === option.value
+                  ? `${PHASE_COLORS[option.value].bg} ${PHASE_COLORS[option.value].text} border-current`
+                  : 'bg-background border-border text-muted-foreground hover:bg-muted/50'
+                  }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
-          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Total Candidates</p>
-          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalCandidatesCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Across all active pipelines</p>
-        </div>
-
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Clock className="w-16 h-16 text-orange-500" />
-          </div>
-          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Interviews Set</p>
-          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{interviewsSetCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Candidates in interview phase</p>
-        </div>
-
-        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-            <CheckCircle className="w-16 h-16 text-green-500" />
-          </div>
-          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Hired</p>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{hiredCount}</p>
-          <p className="text-xs text-muted-foreground mt-1">Successfully placed</p>
-        </div>
-      </motion.div>
-
-      {/* Search */}
-      <div className="bg-card border border-border/50 p-2 rounded-xl flex items-center gap-3 shadow-sm max-w-xl">
-        <Search className="w-5 h-5 text-muted-foreground ml-2" />
-        <input
-          type="text"
-          placeholder="Search jobs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-2 text-foreground"
-        />
         </div>
 
         {/* Jobs List */}
@@ -485,60 +454,67 @@ const JobsPage: React.FC = () => {
           </div>
         )}
 
-      {/* Create/Edit Job Modal - Simplified & Elegant */}
-      {isModalOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/50 dark:bg-black/50"
-          onClick={() => setIsModalOpen(false)}
-        >
+      {/* Premium Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl relative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-lg"
+            onClick={() => setIsModalOpen(false)}
           >
-            {/* Modal Card */}
-            <div className="bg-background border border-border rounded-2xl shadow-xl overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card w-full max-w-2xl relative border border-border/60 shadow-2xl rounded-3xl overflow-hidden"
+            >
+              {/* Animated Gradient Header */}
+              <div className="relative h-32 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 overflow-hidden">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30" />
 
-              {/* Header */}
-              <div className="relative px-6 pt-6 pb-5 border-b border-gray-100 dark:border-gray-800">
                 {/* Close Button */}
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all z-10 group"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
 
-                {/* Title Section */}
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                    <Briefcase className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                      {editingJob ? 'Edit Job Opening' : 'Create New Job'}
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                      {editingJob ? 'Update job details' : 'Add a new position'}
-                    </p>
+                {/* Icon and Title */}
+                <div className="absolute bottom-0 left-0 right-0 px-8 pb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg">
+                      <Briefcase className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+                        {editingJob ? 'Edit Job Opening' : 'Create New Job'}
+                      </h2>
+                      <p className="text-sm text-white/90 drop-shadow">
+                        {editingJob ? 'Update your job posting details' : 'Add a new position to your pipeline'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
+              <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
                 {/* Job Role Field */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-foreground">
+                    <Briefcase className="w-4 h-4 text-primary" />
                     Job Role
                   </label>
                   <input
@@ -546,73 +522,102 @@ const JobsPage: React.FC = () => {
                     required
                     value={formData.job_role}
                     onChange={(e) => setFormData({ ...formData, job_role: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl bg-background border-2 border-border hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-foreground placeholder:text-muted-foreground"
                     placeholder="e.g. Senior Frontend Engineer"
                   />
-                </div>
+                </motion.div>
 
                 {/* Description Field */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     Description
                   </label>
                   <textarea
                     required
                     value={formData.job_description}
                     onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all h-28 resize-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full px-4 py-3 rounded-xl bg-background border-2 border-border hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all h-32 resize-none text-foreground placeholder:text-muted-foreground"
                     placeholder="Job requirements, responsibilities, tech stack..."
                   />
-                </div>
+                </motion.div>
 
-                {/* Status Selector */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                {/* Status Selector - Only Active/Inactive */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <label className="flex items-center gap-2 text-sm font-semibold mb-3 text-foreground">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                     Status
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'active' })}
-                      className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all border cursor-pointer ${formData.status === 'active'
-                        ? 'bg-green-50 dark:bg-green-500/10 border-green-500 text-green-700 dark:text-green-400'
-                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-750'
-                        }`}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <span className={formData.status === 'active' ? 'text-green-500' : 'text-gray-400'}>●</span>
-                        Active
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'inactive' })}
-                      className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all border cursor-pointer ${formData.status === 'inactive'
-                        ? 'bg-gray-100 dark:bg-gray-500/10 border-gray-500 text-gray-700 dark:text-gray-400'
-                        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-750'
-                        }`}
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <span className={formData.status === 'inactive' ? 'text-gray-500' : 'text-gray-400'}>○</span>
-                        Inactive
-                      </span>
-                    </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        value: 'active',
+                        label: 'Active',
+                        icon: '●',
+                        bg: 'bg-green-500/10 dark:bg-green-500/20',
+                        text: 'text-green-600 dark:text-green-400',
+                        border: 'border-green-500/50',
+                        hoverBg: 'hover:bg-green-500/20'
+                      },
+                      {
+                        value: 'inactive',
+                        label: 'Inactive',
+                        icon: '○',
+                        bg: 'bg-gray-500/10 dark:bg-gray-500/20',
+                        text: 'text-gray-600 dark:text-gray-400',
+                        border: 'border-gray-500/50',
+                        hoverBg: 'hover:bg-gray-500/20'
+                      },
+                    ].map((status) => (
+                      <button
+                        key={status.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, status: status.value })}
+                        className={`px-5 py-4 rounded-xl font-semibold text-sm transition-all border-2 ${formData.status === status.value
+                          ? `${status.bg} ${status.border} ${status.text}`
+                          : `bg-muted/30 border-border text-muted-foreground ${status.hoverBg}`
+                          }`}
+                      >
+                        <span className="flex items-center justify-center gap-2.5">
+                          <span className={`text-xl ${formData.status === status.value ? 'animate-pulse' : 'opacity-50'}`}>
+                            {status.icon}
+                          </span>
+                          {status.label}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                </div>
+                </motion.div>
 
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                {/* Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="flex justify-end gap-3 pt-4"
+                >
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-5 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all font-medium cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg transition-all font-medium flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-md"
+                    className="px-8 py-2.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all font-semibold flex items-center gap-2"
                   >
                     {editingJob ? (
                       <>
@@ -628,13 +633,15 @@ const JobsPage: React.FC = () => {
                       </>
                     )}
                   </button>
-                </div>
+                </motion.div>
               </form>
             </div>
             </motion.div>
-        </motion.div>
+          </motion.div>
         )}
+    </AnimatePresence>
       </div>
+
 
   );
 };

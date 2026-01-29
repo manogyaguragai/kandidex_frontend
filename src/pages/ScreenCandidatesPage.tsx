@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthContext";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +14,6 @@ import {
   AlertCircle, 
   Loader2, 
   ChevronRight, 
-  Briefcase,
   Brain,
   Sparkles,
   FileSearch,
@@ -25,9 +23,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { screeningApi } from "@/api/screening";
+import { screeningApi, ScreeningCandidate, CandidateStatus, CANDIDATE_STATUS_OPTIONS, GeneratedQuestion, GenerateQuestionsRequest } from "@/api/screening";
 import { dashboardApi } from "@/api/dashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CandidateCard } from "@/components/screening/CandidateCard";
+import { GenerateQuestionsModal } from "@/components/screening/GenerateQuestionsModal";
 import { Switch } from "@/components/ui/switch";
 
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -53,6 +53,14 @@ const ScreenCandidatesPage = () => {
 
   // New state for existing candidates mode
   const [screenMode, setScreenMode] = useState<'upload' | 'existing'>('upload');
+
+  // Interactive Results State
+  const [expandedCandidate, setExpandedCandidate] = useState<string | null>(null);
+  const [candidateStatuses, setCandidateStatuses] = useState<Record<string, CandidateStatus>>({});
+  const [generatingQuestions, setGeneratingQuestions] = useState<string | null>(null);
+  const [localQuestions, setLocalQuestions] = useState<Record<string, GeneratedQuestion[]>>({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCandidateForQuestions, setSelectedCandidateForQuestions] = useState<{ id: string, name: string } | null>(null);
 
   // Fetch user's jobs for selection (keep this for the dropdown)
   const { data: jobsData } = useQuery({
@@ -163,6 +171,112 @@ const ScreenCandidatesPage = () => {
     }
   });
 
+  // Status update mutation
+  const statusMutation = useMutation({
+    mutationFn: async ({ candidateId, status }: { candidateId: string; status: CandidateStatus }) => {
+      return screeningApi.updateCandidateStatus(user!.user_id, candidateId, status);
+    },
+    onSuccess: (_, variables) => {
+      setCandidateStatuses(prev => ({ ...prev, [variables.candidateId]: variables.status }));
+      toast.success(`Status updated to "${CANDIDATE_STATUS_OPTIONS.find(s => s.value === variables.status)?.label}"`);
+    },
+    onError: () => {
+      toast.error("Failed to update status");
+    },
+  });
+
+  // Question generation mutation
+  const questionMutation = useMutation({
+    mutationFn: async (data: GenerateQuestionsRequest) => {
+      setGeneratingQuestions(data.resume_id);
+      return screeningApi.generateQuestionsForCandidate(user!.user_id, data);
+    },
+    onSuccess: (questions, variables) => {
+      setLocalQuestions(prev => ({ ...prev, [variables.resume_id]: questions }));
+      toast.success("Interview questions generated!");
+      setGeneratingQuestions(null);
+      setModalOpen(false);
+      setSelectedCandidateForQuestions(null);
+    },
+    onError: (error) => {
+      console.error(error);
+      toast.error("Failed to generate questions");
+      setGeneratingQuestions(null);
+    },
+  });
+
+  const handleStatusChange = (candidateId: string, status: CandidateStatus) => {
+    statusMutation.mutate({ candidateId, status });
+  };
+
+  const handleOpenQuestionsModal = (candidateId: string, candidateName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedCandidateForQuestions({ id: candidateId, name: candidateName });
+    setModalOpen(true);
+  };
+
+  const handleGenerateQuestions = (data: Omit<GenerateQuestionsRequest, 'screening_run_id' | 'resume_id'>) => {
+    if (!selectedCandidateForQuestions || !results?.run_id) return;
+
+    questionMutation.mutate({
+      ...data,
+      screening_run_id: results.run_id,
+      resume_id: selectedCandidateForQuestions.id
+    });
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-500";
+    if (score >= 60) return "text-yellow-500";
+    return "text-red-500";
+  };
+
+  const getScoreBgColor = (score: number) => {
+    if (score >= 80) return "from-green-500/20 to-emerald-500/20 border-green-500/30";
+    if (score >= 60) return "from-yellow-500/20 to-amber-500/20 border-yellow-500/30";
+    return "from-red-500/20 to-rose-500/20 border-red-500/30";
+  };
+
+  const getDifficultyBadge = (difficulty: string) => {
+    const dLower = difficulty.toLowerCase();
+    if (dLower === 'entry level' || dLower === 'easy') return "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20";
+    if (dLower === 'mid level' || dLower === 'medium') return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20";
+    if (dLower === 'senior' || dLower === 'hard') return "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+    return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+  };
+
+  // Helper to map API candidate (mixed or Candidate model) to ScreeningCandidate interface
+  const mapToScreeningCandidate = (c: any): ScreeningCandidate => {
+    // If it already matches the shape (has resume_id), assume it's good, but handle the mixed response from rank endpoints
+    // The rank endpoint returns Candidate model which has 'id', 'name', 'fitScore', etc.
+    // We need to map it to ScreeningCandidate which has 'resume_id', 'candidate_name', 'ai_fit_score', etc.
+
+    // Check if it's already in the right format (from screening run history) or needs mapping (from immediate rank)
+    if (c.resume_id && c.candidate_name) return c;
+
+    return {
+      resume_id: c.id,
+      candidate_name: c.name,
+      file_name: c.file_name,
+      ai_fit_score: c.fitScore,
+      skill_similarity: c.overall_similarity,
+      candidate_summary: c.summary,
+      skill_assessment: {
+        exact_matches: c.skills?.exact_matches || [],
+        transferable_skills: c.skills?.transferable || [],
+        non_technical_skills: c.skills?.non_technical || []
+      },
+      experience_highlights: c.experience_highlights,
+      education_highlights: c.education_highlights,
+      gaps: c.gaps || [],
+      ai_justification: c.justification,
+      resume_content_preview: c.resume_content || "",
+      questions_generated: false,
+      generated_questions: [],
+      status: 'position_applied'
+    };
+  };
+
   const toggleCandidate = (id: string) => {
     setSelectedCandidateIds(prev =>
       prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
@@ -220,6 +334,19 @@ const ScreenCandidatesPage = () => {
 
   return (
     <>
+      {selectedCandidateForQuestions && (
+        <GenerateQuestionsModal
+          isOpen={modalOpen}
+          onClose={() => {
+            setModalOpen(false);
+            setSelectedCandidateForQuestions(null);
+          }}
+          onGenerate={handleGenerateQuestions}
+          candidateName={selectedCandidateForQuestions.name}
+          isGenerating={generatingQuestions === selectedCandidateForQuestions.id}
+        />
+      )}
+
       <div className="mb-8">
         <h1 className="text-4xl font-bold tracking-tight gradient-text mb-2">Screen Candidates</h1>
         <p className="text-muted-foreground text-lg">Upload resumes and let AI find your best matches.</p>
@@ -787,89 +914,28 @@ const ScreenCandidatesPage = () => {
             </div>
 
              <div className="grid gap-6">
-              {results.candidates.map((candidate: any, index: number) => (
-                <motion.div
-                  key={candidate.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="overflow-hidden border-0 shadow-lg glass-card hover:shadow-xl transition-all duration-300">
-                    <div className="grid md:grid-cols-[120px_1fr_200px] gap-8 p-6">
-                      <div className="flex flex-col items-center justify-center space-y-3 text-center border-r border-border/50 pr-6">
-                        <div className="relative">
-                          <svg className="w-24 h-24 transform -rotate-90">
-                            <circle
-                              className="text-muted/20"
-                              strokeWidth="8"
-                              stroke="currentColor"
-                              fill="transparent"
-                              r="36"
-                              cx="48"
-                              cy="48"
-                            />
-                            <circle
-                              className={`${candidate.fitScore >= 80 ? 'text-green-500' :
-                                candidate.fitScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                                }`}
-                              strokeWidth="8"
-                              strokeDasharray={36 * 2 * Math.PI}
-                              strokeDashoffset={36 * 2 * Math.PI - (candidate.fitScore / 100) * (36 * 2 * Math.PI)}
-                              strokeLinecap="round"
-                              stroke="currentColor"
-                              fill="transparent"
-                              r="36"
-                              cx="48"
-                              cy="48"
-                            />
-                          </svg>
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xl font-bold">
-                            {candidate.fitScore}%
-                          </div>
-                        </div>
-                        <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">Fit Score</span>
-                      </div>
-
-                      <div className="space-y-4 py-2">
-                        <div>
-                          <h3 className="text-2xl font-bold text-foreground">{candidate.name}</h3>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                            <div className="flex items-center gap-1">
-                              <Briefcase className="w-4 h-4" />
-                              <span>{candidate.file_name}</span>
-                            </div>
-                            <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                            <span>{candidate.email || "No email detected"}</span>
-                          </div>
-                        </div>
-
-                        <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 p-4 rounded-xl">
-                          {candidate.summary}
-                        </p>
-
-                        {candidate.skills && (
-                            <div className="flex flex-wrap gap-2">
-                            {candidate.skills.exact_matches?.slice(0, 5).map((skill: string) => (
-                              <span key={skill} className="px-2.5 py-1 rounded-lg bg-green-500/10 text-green-700 dark:text-green-400 text-xs font-semibold border border-green-500/20">
-                                {skill}
-                              </span>
-                            ))}
-                            {candidate.skills.missing?.slice(0, 3).map((skill: string) => (
-                              <span key={skill} className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-700 dark:text-red-400 text-xs font-semibold border border-red-500/20 opacity-70">
-                                Missing: {skill}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-3 justify-center border-l border-border/50 pl-8">
-                        <Button className="w-full bg-primary hover:bg-primary/90">View Profile</Button>
-                        <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5">Schedule Interview</Button>
-                      </div>
-                      </div>
-                  </Card>
-                </motion.div>
+              {results.candidates
+                .map(mapToScreeningCandidate)
+                .map((candidate: ScreeningCandidate, index: number) => (
+                  <CandidateCard
+                    key={candidate.resume_id}
+                    candidate={candidate}
+                    rank={index + 1}
+                    isExpanded={expandedCandidate === candidate.resume_id}
+                    onToggle={() =>
+                      setExpandedCandidate(
+                        expandedCandidate === candidate.resume_id ? null : candidate.resume_id
+                      )
+                    }
+                    currentStatus={candidateStatuses[candidate.resume_id] || candidate.status || 'position_applied'}
+                    onStatusChange={(status) => handleStatusChange(candidate.resume_id, status)}
+                    onGenerateQuestions={(e) => handleOpenQuestionsModal(candidate.resume_id, candidate.candidate_name, e)}
+                    isGeneratingQuestions={generatingQuestions === candidate.resume_id}
+                    localQuestions={localQuestions[candidate.resume_id]}
+                    getScoreColor={getScoreColor}
+                    getScoreBgColor={getScoreBgColor}
+                    getDifficultyBadge={getDifficultyBadge}
+                  />
                 ))}
              </div>
           </motion.div>
