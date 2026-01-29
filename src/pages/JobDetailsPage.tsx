@@ -24,9 +24,16 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Briefcase
+  Briefcase,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
 
@@ -101,6 +108,19 @@ const JobDetailsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] }); 
     },
     onError: () => toast.error("Failed to upload resumes"),
+  });
+
+  // Change Phase Mutation
+  const changePhaseMutation = useMutation({
+    mutationFn: ({ resumeId, newPhase }: { resumeId: string; newPhase: string }) =>
+      resumeApi.changeResumePhase(user!.user_id, resumeId, newPhase as any),
+    onSuccess: () => {
+      toast.success("Candidate phase updated");
+      queryClient.invalidateQueries({ queryKey: ["job-candidates", jobId] });
+      // Invalidate job counts if needed
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+    onError: () => toast.error("Failed to update phase"),
   });
 
   // Dropzone
@@ -314,11 +334,31 @@ const JobDetailsPage = () => {
                             {new Date(candidate.created_at).toLocaleDateString()}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}>
-                            <Icon className="w-3 h-3" />
-                            {formatPhase(candidate.phase)}
-                          </span>
+                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-background ${style.bg} ${style.text} ${style.border} focus:ring-${style.text.split('-')[1]}-500`}>
+                                  <Icon className="w-3 h-3" />
+                                  {formatPhase(candidate.phase)}
+                                  <ChevronDown className="w-3 h-3 ml-1 opacity-70" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="w-[200px]">
+                                {Object.entries(PHASE_STYLES).map(([phaseKey, phaseStyle]) => (
+                                  <DropdownMenuItem
+                                    key={phaseKey}
+                                    onClick={() => changePhaseMutation.mutate({ resumeId: candidate._id, newPhase: phaseKey })}
+                                    className="flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <div className={`w-2 h-2 rounded-full ${phaseStyle.text.replace('text-', 'bg-')}`} />
+                                    <span>{formatPhase(phaseKey)}</span>
+                                    {candidate.phase === phaseKey && (
+                                      <CheckCircle className="w-3 h-3 ml-auto text-primary" />
+                                    )}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                         </td>
                         <td className="px-6 py-4">
                            {isScreened ? (
