@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Trash2, Edit, Calendar, Users, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
+import { Plus, Search, Trash2, Edit, Calendar, Users, ChevronLeft, ChevronRight, Briefcase, CheckCircle, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthContext';
 import { dashboardApi, Job } from '@/api/dashboard';
@@ -224,6 +224,13 @@ const JobsPage: React.FC = () => {
     navigate(`/jobs/${jobId}${phase ? `?phase=${phase}` : ''}`);
   };
 
+  // Calculate Aggregated Stats
+  const activeJobsCount = jobs.filter(j => j.status === 'active').length;
+
+  const totalCandidatesCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.total || 0), 0);
+  const interviewsSetCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.interview_set || 0), 0);
+  const hiredCount = Object.values(jobPhaseCounts).reduce((acc, count) => acc + (count.hired || 0), 0);
+
   return (
 
     <div className="space-y-8 min-h-[calc(100vh-12rem)]">
@@ -241,6 +248,58 @@ const JobsPage: React.FC = () => {
             Create New Job
           </button>
         </div>
+
+      {/* Analytics Overview - Stunning Glass Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      >
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Briefcase className="w-16 h-16 text-blue-500" />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Active Jobs</p>
+          <div className="flex items-end gap-2">
+            <p className="text-3xl font-bold text-foreground">{activeJobsCount}</p>
+            <p className="text-sm text-muted-foreground mb-1.5">/ {jobs.length} total</p>
+          </div>
+          <div className="mt-2 h-1 w-full bg-blue-500/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out"
+              style={{ width: `${(activeJobsCount / (jobs.length || 1)) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Users className="w-16 h-16 text-purple-500" />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Total Candidates</p>
+          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalCandidatesCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Across all active pipelines</p>
+        </div>
+
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Clock className="w-16 h-16 text-orange-500" />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Interviews Set</p>
+          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{interviewsSetCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Candidates in interview phase</p>
+        </div>
+
+        <div className="glass-card p-5 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
+          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+            <CheckCircle className="w-16 h-16 text-green-500" />
+          </div>
+          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Hired</p>
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{hiredCount}</p>
+          <p className="text-xs text-muted-foreground mt-1">Successfully placed</p>
+        </div>
+      </motion.div>
 
       {/* Search */}
       <div className="bg-card border border-border/50 p-2 rounded-xl flex items-center gap-3 shadow-sm max-w-xl">
