@@ -106,7 +106,10 @@ export const CandidateCard = ({
           {/* Candidate Info */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3 mb-1">
-              <h3 className="text-xl font-bold text-foreground truncate">
+              <h3
+                className="text-xl font-bold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                onClick={onToggle}
+              >
                 {candidate.candidate_name}
               </h3>
               {/* Status Badge with Dropdown */}
@@ -303,16 +306,20 @@ export const CandidateCard = ({
 
               {/* Gaps */}
               {candidate.gaps.length > 0 && (
-                <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
-                  <h4 className="font-semibold text-sm text-red-700 dark:text-red-400 mb-3 flex items-center gap-2">
-                    <XCircle className="w-4 h-4" /> Identified Gaps
+                <div className="p-5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                    <XCircle className="w-24 h-24 text-red-500" />
+                  </div>
+                  <h4 className="font-semibold text-base text-red-700 dark:text-red-400 mb-4 flex items-center gap-2 relative z-10">
+                    <XCircle className="w-5 h-5" /> Identified Gaps
                   </h4>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 relative z-10">
                     {candidate.gaps.map((gap: string, i: number) => (
                       <span
                         key={i}
-                        className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-700 dark:text-red-400 text-xs font-medium"
+                        className="px-3 py-1.5 rounded-lg bg-white dark:bg-red-950/40 text-red-700 dark:text-red-300 text-sm font-medium border border-red-100 dark:border-red-900/50 shadow-sm flex items-center gap-2"
                       >
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
                         {gap}
                       </span>
                     ))}
