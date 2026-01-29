@@ -56,6 +56,7 @@ export interface ScreeningRun {
   time_taken: number;
   created_at: string;
   candidates: ScreeningCandidate[];
+  deep_analysis?: boolean;
 }
 
 export interface PaginatedScreeningResponse {

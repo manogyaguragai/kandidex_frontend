@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Target,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -191,6 +192,22 @@ const ScreeningHistoryListPage = () => {
                           </div>
                           <p className="text-xs text-muted-foreground">Top Score</p>
                         </div>
+
+                        {run.deep_analysis ? (
+                          <div className="text-center px-3 py-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                            <div className="flex items-center gap-1 justify-center">
+                              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                            </div>
+                            <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Deep</p>
+                          </div>
+                        ) : (
+                          <div className="text-center px-3 py-2 rounded-xl bg-muted/30">
+                            <div className="flex items-center gap-1 justify-center">
+                              <Zap className="w-3.5 h-3.5 text-muted-foreground" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Standard</p>
+                          </div>
+                        )}
 
                         <div className="p-2 rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-all">
                           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

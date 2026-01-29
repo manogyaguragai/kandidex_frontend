@@ -23,7 +23,8 @@ import {
   Clock,
   Briefcase,
   ChevronDown,
-  Zap
+  Zap,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -240,6 +241,18 @@ const ScreeningHistoryPage = () => {
                 <Users className="w-4 h-4" />
                 {run.candidates.length} candidates
               </span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              {run.deep_analysis ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Deep Analysis
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground border border-border">
+                  <Zap className="w-3.5 h-3.5" />
+                  Standard
+                </span>
+              )}
             </div>
           </div>
           <Link to="/screen-candidates">
