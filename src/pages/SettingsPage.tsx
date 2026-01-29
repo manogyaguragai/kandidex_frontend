@@ -60,7 +60,7 @@ const SettingsPage = () => {
         <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="ranking">Ranking</TabsTrigger>
-          <TabsTrigger value="notifications">Notify</TabsTrigger>
+          {/* <TabsTrigger value="notifications">Notify</TabsTrigger> */}
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
         
@@ -77,10 +77,10 @@ const SettingsPage = () => {
                   <AvatarImage src="" />
                   <AvatarFallback className="text-2xl">{user?.initials}</AvatarFallback>
                 </Avatar>
-                <div className="space-y-1">
+                {/* <div className="space-y-1">
                    <Button variant="outline" size="sm">Change Avatar</Button>
                    <p className="text-xs text-muted-foreground">JPG, GIF or PNG. 1MB max.</p>
-                </div>
+                </div> */}
               </div>
               <Separator />
               <div className="grid gap-4 md:grid-cols-2">
@@ -233,7 +233,7 @@ const SettingsPage = () => {
              </CardFooter>
            </Card>
            
-           <Card className="border-red-200 dark:border-red-900/50">
+          {/* <Card className="border-red-200 dark:border-red-900/50">
              <CardHeader>
                <CardTitle className="text-red-500">Danger Zone</CardTitle>
                <CardDescription>Irreversible actions requiring caution.</CardDescription>
@@ -247,7 +247,7 @@ const SettingsPage = () => {
                    <Button variant="destructive">Delete Account</Button>
                 </div>
              </CardContent>
-           </Card>
+           </Card> */}
         </TabsContent>
       </Tabs>
     </div>
